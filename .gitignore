@@ -84,7 +84,6 @@ output/*
 *.pth
 *.ckpt
 *.safetensors
-models/
 
 # --- Logs ---
 *.log
