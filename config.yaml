@@ -1,0 +1,44 @@
+# ============================================================
+# Video2Notes-AI — default configuration
+# ============================================================
+# All paths are relative to the project root unless absolute.
+
+# === Paths ===
+paths:
+  data_dir: "data"            # input videos live here
+  output_dir: "output"        # generated notes go here
+  cache_dir: ".cache"         # whisper models, temp files
+
+# === Step 2: Transcription (faster-whisper) ===
+whisper:
+  model_size: "base"          # tiny | base | small | medium | large-v3
+  language: null              # null = auto-detect; or "en", "fr", "ar", etc.
+  device: "cpu"               # cpu | cuda
+  compute_type: "int8"        # int8 | int8_float16 | float16 | float32
+  beam_size: 5
+
+# === Step 3: Scene detection (PySceneDetect) ===
+scenes:
+  threshold: 27.0             # 0-100; lower = more sensitive to changes
+  min_scene_length: 30.0      # seconds; merge segments shorter than this
+
+# === Step 5: Keyframe extraction (OpenCV) ===
+keyframes:
+  position: "middle"          # start | middle | end
+  quality: 90                 # JPEG quality 1-100
+  max_width: 1280             # downscale wider frames to this
+
+# === Step 6: AI analysis ===
+ai:
+  enabled: true
+  backend: "ollama"           # ollama | openai | none
+  model: "llama3.1:8b"        # ollama model tag
+  base_url: "http://localhost:11434"
+  temperature: 0.3            # lower = more deterministic
+  max_retries: 2              # retry on invalid JSON from the model
+
+# === Step 7: Output ===
+output:
+  formats: ["markdown"]       # any of: markdown, html, pdf
+  embed_frames: true          # include keyframe images in the doc
+  include_transcript: false   # include full transcript under each chapter
