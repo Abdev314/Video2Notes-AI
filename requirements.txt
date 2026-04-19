@@ -1,0 +1,27 @@
+# === Core pipeline ===
+faster-whisper==1.0.3       # Local Whisper (4x faster than openai-whisper)
+scenedetect[opencv]==0.6.4  # Scene detection + OpenCV bundled
+opencv-python==4.10.0.84    # Frame extraction
+ffmpeg-python==0.2.0        # Python wrapper for FFmpeg commands
+
+# === AI (choose based on your answer) ===
+# ollama==0.3.3             # Uncomment if using Ollama
+# openai==1.54.0            # Uncomment if using OpenAI API
+
+# === Output ===
+markdown==3.7               # Markdown → HTML
+weasyprint==62.3            # HTML → PDF (prettier than reportlab)
+jinja2==3.1.4               # Template rendering
+
+# === Utilities ===
+pyyaml==6.0.2               # config.yaml parsing
+python-dotenv==1.0.1        # .env loading
+click==8.1.7                # Clean CLI arguments
+rich==13.9.4                # Beautiful terminal output + progress bars
+pydantic==2.9.2             # Data validation for Segment objects
+
+# === Dev ===
+pytest==8.3.3
+pytest-cov==5.0.0
+black==24.10.0              # Code formatter
+ruff==0.7.2                 # Fast linter
