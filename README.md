@@ -1,0 +1,251 @@
+# 🎓 Video2Notes-AI
+
+**Turn any lecture video into clean, structured study notes — automatically.**
+
+Feed in a `.mp4`, get back a markdown file with chapters, screenshots, and summaries. Runs entirely on your own machine. No cloud, no API costs.
+
+---
+
+## The problem
+
+Watching an hour-long lecture to review one specific concept is painful.
+
+- Videos have **no table of contents**
+- You can't **search** spoken content
+- Taking notes by hand is slow — pause, screenshot, write, rewind, repeat
+- A 60-minute video easily costs **2+ hours** to turn into usable notes
+
+The content is valuable. The format is wrong.
+
+---
+
+## How Video2Notes-AI solves it
+
+One command, one video, one output file.
+
+![hero-diagram.png](docs/hero-diagram.png))
+
+
+The output is a ready-to-read markdown document with:
+- **Chapters** auto-detected from scene changes
+- **One screenshot** per chapter from the video
+- **AI-written title + summary + key points** for each chapter
+- **Timestamps** linking back to exact moments in the video
+
+---
+
+## Architecture
+
+The tool is a **pipeline** — data flows through seven independent steps, each doing one thing well.
+
+![pipeline-diagram.svg](docs/pipeline-diagram.svg)
+
+### The layers
+
+The code is organized into three layers:
+
+| Layer | Folder | Responsibility |
+|---|---|---|
+| **Models** | `src/video2notes/models/` | Data shapes (the `Segment` class). No behavior, just structure. |
+| **Modules** | `src/video2notes/modules/` | The seven pipeline steps. Each one is a pure function: data in → data out. |
+| **Utils** | `src/video2notes/utils/` | Config loading and logging. Boring infrastructure. |
+
+Each module knows about the one before it (via the data it consumes) but nothing more. You could swap Whisper for Google Speech-to-Text tomorrow — only `transcribe.py` would change.
+
+### The data object that ties it all together
+
+Every pipeline step either creates or enriches a `Segment`:
+
+```python
+Segment(
+  id=1,
+  start_time=0.0,
+  end_time=58.29,
+  transcript="Redis, an in-memory multi-model database...",   # from step 4
+  frame_path="output/frames/segment_001.jpg",                 # from step 5
+  title="Introduction to Redis",                              # from step 6
+  summary="Redis is a fast in-memory database...",            # from step 6
+  key_points=["Sub-millisecond latency", ...],                # from step 6
+)
+```
+
+By the end of the pipeline, each `Segment` is one complete chapter of the output document.
+
+---
+
+## Technology stack
+
+Everything is free and open source.
+
+| Tool | What it does | Why this one |
+|---|---|---|
+| **Python 3.11** | Glues everything together | Every AI tool has Python bindings |
+| **FFmpeg** | Extracts audio from video | Industry standard. Handles every video format. |
+| **faster-whisper** | Speech-to-text | OpenAI's Whisper model, 4× faster than the reference |
+| **PySceneDetect** | Scene cut detection | Analyzes HSV histograms frame-by-frame |
+| **OpenCV** | Grabs video frames | Can seek to any timestamp and read a frame |
+| **Ollama + Llama 3.1** | Generates titles & summaries | Local LLM server, no API keys needed |
+| **Jinja2** | Renders markdown | Template-based, easy to customize output |
+| **Pydantic** | Validates data between steps | Catches typos and bad data early |
+| **Rich** | Pretty terminal output | Colored logs, progress bars |
+
+---
+
+## Memory & performance
+
+Here's what the pipeline actually costs to run.
+
+### Memory footprint (peak)
+
+![ram-usage-chart.svg](docs/ram-usage-chart.svg)
+
+
+- **Whisper (`base` model)** — ~1.5 GB
+- **Ollama with Llama 3.1 8B** — ~6 GB, held for the whole AI phase
+- **OpenCV frame buffer** — negligible
+- **Everything else** — under 100 MB
+
+**Minimum practical RAM:** 8 GB. Recommended: 16 GB.
+
+### Time on CPU (no GPU)
+
+Rough numbers for a **10-minute lecture**:
+
+![cpu-time-chart.svg](docs/cpu-time-chart.svg)
+
+**Measured on a 2.5-minute tech explainer (7 chapters)**:
+
+| Step | Duration |
+|---|---|
+| Audio extraction | 1 s |
+| Transcription | 15 s |
+| Scene detection | 4 s |
+| Segment builder | instant |
+| Keyframe extraction | 1 s |
+| AI analysis | **200 s** (~28s × 7 chapters) |
+| Markdown export | instant |
+| **Total** | **3 min 41 s** |
+
+The AI step dominates — it runs the LLM once per chapter. Longer videos
+with more scene changes produce more chapters, so total time scales with
+chapter count rather than video length. On a GPU, both Whisper and the
+LLM run roughly 10-20× faster.
+
+---
+
+## How the tool works
+
+### Installation
+
+```bash
+# 1. Clone
+git clone https://github.com/you/video2notes-ai.git
+cd video2notes-ai
+
+# 2. Set up Python 3.11 environment
+python3.11 -m venv env
+source env/bin/activate
+pip install -r requirements.txt
+
+# 3. Install FFmpeg (system-level)
+sudo apt install ffmpeg        # Debian/Ubuntu
+brew install ffmpeg            # macOS
+
+# 4. Install Ollama + download the LLM
+curl -fsSL https://ollama.com/install.sh | sh
+ollama pull llama3.1:8b        # ~4.7 GB, one-time download
+```
+
+### Usage
+
+```bash
+# Drop your video in
+cp /path/to/lecture.mp4 data/sample.mp4
+
+# Run the pipeline
+python -m video2notes data/sample.mp4 -o output/notes.md
+
+# Read the result
+code output/notes.md
+```
+
+### What you get
+
+```
+output/
+├── notes.md              ← your structured notes
+└── frames/
+    ├── segment_001.jpg   ← one keyframe per chapter
+    ├── segment_002.jpg
+    └── ...
+```
+
+Each `notes.md` chapter looks like this:
+
+```markdown
+## Chapter 1 — Introduction to Redis
+⏱ 00:00:00 – 00:00:58 · 58.3s
+
+![Chapter 1](frames/segment_001.jpg)
+
+Redis is an in-memory multi-model database created in 2009,
+designed for sub-millisecond latency...
+
+**Key points:**
+- Stands for Remote Dictionary Server
+- In-memory reads, disk persistence
+- Used by Twitter and other high-traffic sites
+```
+
+---
+
+## Configuration
+
+All knobs live in `config.yaml`. Change model sizes, scene thresholds, output formats without touching code.
+
+```yaml
+whisper:
+  model_size: "base"        # tiny | base | small | medium | large-v3
+  device: "cpu"             # cpu | cuda
+
+scenes:
+  threshold: 27.0           # lower = more chapters
+  min_scene_length: 30.0    # seconds; merge shorter scenes
+
+ai:
+  enabled: true
+  model: "llama3.1:8b"
+  temperature: 0.3
+```
+
+---
+
+## Project structure
+
+```
+video2notes-ai/
+├── config.yaml              ← all tunables
+├── requirements.txt
+├── data/                    ← user input videos
+├── output/                  ← generated notes + frames
+├── .cache/                  ← pipeline working files (auto-cleaned)
+└── src/video2notes/
+    ├── models/segment.py    ← the Segment data class
+    ├── modules/             ← 7 pipeline steps
+    │   ├── audio.py
+    │   ├── transcribe.py
+    │   ├── scenes.py
+    │   ├── segments.py
+    │   ├── keyframes.py
+    │   ├── ai.py
+    │   └── export.py
+    ├── templates/
+    │   └── notes.md.j2      ← output template
+    └── utils/               ← config + logger
+```
+
+---
+
+## License
+
+MIT
