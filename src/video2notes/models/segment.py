@@ -11,6 +11,8 @@ from pydantic import BaseModel, Field, field_validator
 
 class Segment(BaseModel):
     """A single chapter of the lecture — the pipeline's unit of work."""
+    model_config = {"extra": "allow"}   # ← add this line
+
 
     # --- Identity ---
     id: int = Field(..., description="1-based segment index", ge=1)
