@@ -11,7 +11,8 @@ from __future__ import annotations
 from pathlib import Path
 
 from scenedetect import open_video, SceneManager
-from scenedetect.detectors import ContentDetector
+
+from scenedetect.detectors import ContentDetector, AdaptiveDetector
 
 from utils.logger import get_logger
 
@@ -65,7 +66,12 @@ def detect_scenes(
     try:
         video = open_video(str(video_path))
         scene_manager = SceneManager()
-        scene_manager.add_detector(ContentDetector(threshold=threshold))
+        scene_manager.add_detector(
+            AdaptiveDetector(
+                adaptive_threshold=3.0,
+                min_scene_len=int(min_scene_length * video.frame_rate),
+            )
+        )
         scene_manager.detect_scenes(video, show_progress=False)
         scene_list = scene_manager.get_scene_list()
     except Exception as e:
