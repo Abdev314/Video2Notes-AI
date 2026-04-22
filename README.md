@@ -142,16 +142,30 @@ LLM run roughly 10-20× faster.
 git clone https://github.com/you/video2notes-ai.git
 cd video2notes-ai
 
-# 2. Set up Python 3.11 environment
-python3.11 -m venv env
+
+# 2. Load pyenv into this shell
+export PYENV_ROOT="$HOME/.pyenv"
+export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init - bash)"
+
+# 3. Pin this folder to 3.11.13
+pyenv local 3.11.13
+
+# 4. Verify BEFORE making the venv
+python --version      # MUST say Python 3.11.13
+
+# 4. Only now create the venv
+python -m venv env
 source env/bin/activate
+
+# 5. Install deps
 pip install -r requirements.txt
 
-# 3. Install FFmpeg (system-level)
+# 6. Install FFmpeg (system-level)
 sudo apt install ffmpeg        # Debian/Ubuntu
 brew install ffmpeg            # macOS
 
-# 4. Install Ollama + download the LLM
+# 7. Install Ollama + download the LLM
 curl -fsSL https://ollama.com/install.sh | sh
 ollama pull llama3.1:8b        # ~4.7 GB, one-time download
 ```
@@ -163,7 +177,7 @@ ollama pull llama3.1:8b        # ~4.7 GB, one-time download
 cp /path/to/lecture.mp4 data/sample.mp4
 
 # Run the pipeline
-python -m video2notes data/sample.mp4 -o output/notes.md
+python src/main.py data/video.mp4
 
 # Read the result
 code output/notes.md
@@ -229,7 +243,7 @@ video2notes-ai/
 ├── data/                    ← user input videos
 ├── output/                  ← generated notes + frames
 ├── .cache/                  ← pipeline working files (auto-cleaned)
-└── src/video2notes/
+└── src/
     ├── models/segment.py    ← the Segment data class
     ├── modules/             ← 7 pipeline steps
     │   ├── audio.py
