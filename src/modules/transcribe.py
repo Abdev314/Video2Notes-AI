@@ -14,7 +14,7 @@ from typing import Optional
 
 from faster_whisper import WhisperModel
 
-from video2notes.utils.logger import get_logger
+from utils.logger import get_logger
 
 log = get_logger(__name__)
 

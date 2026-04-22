@@ -13,7 +13,7 @@ from pathlib import Path
 from scenedetect import open_video, SceneManager
 from scenedetect.detectors import ContentDetector
 
-from video2notes.utils.logger import get_logger
+from utils.logger import get_logger
 
 log = get_logger(__name__)
 

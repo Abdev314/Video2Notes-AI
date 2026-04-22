@@ -15,8 +15,8 @@ from typing import Iterable
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
-from video2notes.models.segment import Segment
-from video2notes.utils.logger import get_logger
+from models.segment import Segment
+from utils.logger import get_logger
 
 log = get_logger(__name__)
 

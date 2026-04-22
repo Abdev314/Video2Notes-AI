@@ -7,20 +7,19 @@ command line without writing any Python.
 
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
 import click
 
-from video2notes.modules.audio import extract_audio
-from video2notes.modules.transcribe import transcribe_audio
-from video2notes.modules.scenes import detect_scenes
-from video2notes.modules.segments import build_segments
-from video2notes.modules.keyframes import extract_keyframes
-from video2notes.modules.ai import analyze_segments, AIAnalysisError
-from video2notes.modules.export import export_markdown
-from video2notes.utils.config import load_config
-from video2notes.utils.logger import get_logger
+from modules.audio import extract_audio
+from modules.transcribe import transcribe_audio
+from modules.scenes import detect_scenes
+from modules.segments import build_segments
+from modules.keyframes import extract_keyframes
+from modules.ai import analyze_segments, AIAnalysisError
+from modules.export import export_markdown
+from utils.config import load_config
+from utils.logger import get_logger
 
 
 @click.command()

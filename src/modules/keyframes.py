@@ -12,8 +12,8 @@ from typing import Literal
 
 import cv2
 
-from video2notes.models.segment import Segment
-from video2notes.utils.logger import get_logger
+from models.segment import Segment
+from utils.logger import get_logger
 
 log = get_logger(__name__)
 

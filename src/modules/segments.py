@@ -8,9 +8,11 @@ Segment objects, which are the pipeline's chapter unit.
 
 from __future__ import annotations
 
-from video2notes.models.segment import Segment
-from video2notes.modules.transcribe import Utterance
-from video2notes.utils.logger import get_logger
+from models.segment import Segment
+
+
+from modules.transcribe import Utterance
+from utils.logger import get_logger
 
 log = get_logger(__name__)
 

@@ -13,7 +13,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from video2notes.utils.logger import get_logger
+from utils.logger import get_logger
 
 log = get_logger(__name__)
 
