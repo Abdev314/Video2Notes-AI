@@ -19,8 +19,8 @@ whisper:
 
 # === Step 3: Scene detection (PySceneDetect) ===
 scenes:
-  threshold: 15.0           # 0-100; lower = more sensitive to changes
-  min_scene_length: 10.0      # seconds; merge segments shorter than this
+  threshold: 12.0           # 0-100; lower = more sensitive to changes
+  min_scene_length: 8.0      # seconds; merge segments shorter than this
 
 # === Step 5: Keyframe extraction (OpenCV) ===
 keyframes:
