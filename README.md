@@ -23,7 +23,7 @@ The content is valuable. The format is wrong.
 
 One command, one video, one output file.
 
-![hero-diagram.png](docs/hero-diagram.png))
+![hero-diagram.png](docs/hero-diagram.png)
 
 
 The output is a ready-to-read markdown document with:
@@ -177,7 +177,7 @@ ollama pull llama3.1:8b        # ~4.7 GB, one-time download
 cp /path/to/lecture.mp4 data/sample.mp4
 
 # Run the pipeline
-python src/main.py data/video.mp4
+python src/main.py data/sample.mp4
 
 # Read the result
 code output/notes.md
