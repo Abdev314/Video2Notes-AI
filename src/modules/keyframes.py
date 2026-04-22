@@ -122,13 +122,28 @@ def extract_keyframes(
 # Helpers
 
 def _pick_timestamp(start: float, end: float, position: Position) -> float:
-    """Return which second inside [start, end] to grab the frame from."""
+    """
+    Return the timestamp to grab the frame from.
+
+    We deliberately avoid landing on transitions:
+      - Pushes `start` forward ~1s past any fade-in
+      - Pulls `end` backward ~0.5s past any fade-out
+      - For `middle`, grabs at 30% into the segment — right after the
+        transition settles, when the slide is most visible
+    """
+    duration = end - start
+
     if position == "start":
-        return start
+        # Skip the first second (usually a fade-in or leftover transition)
+        offset = min(1.0, duration * 0.2)
+        return start + offset
+
     if position == "end":
-        # Pull back 100 ms so we don't grab the transition into the next scene
-        return max(start, end - 0.1)
-    return (start + end) / 2.0   # middle
+        offset = min(0.5, duration * 0.1)
+        return max(start, end - offset)
+
+    # middle: 30% into the segment — post-transition, content fresh
+    return start + duration * 0.3
 
 
 def _grab_frame(cap: cv2.VideoCapture, timestamp: float, fps: float):
