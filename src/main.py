@@ -8,6 +8,7 @@ command line without writing any Python.
 from __future__ import annotations
 
 from pathlib import Path
+from utils.monitor import ResourceMonitor
 
 import click
 
@@ -56,62 +57,69 @@ def main(video: Path, output: Path, no_ai: bool, config: Path) -> None:
     audio_path = cache_dir / f"{video.stem}.wav"
     frames_dir = output.parent / "frames"
 
+    from utils.monitor import ResourceMonitor
+
+    # ... inside main(), after cfg is loaded and paths are set up ...
+
     log.info(f"[bold]Processing[/bold] [cyan]{video.name}[/cyan]")
 
-    # ---- 7-step pipeline ----
-    extract_audio(video, audio_path)
+    with ResourceMonitor(Path(".cache/monitor.csv"), interval=1.0):
 
-    utterances = transcribe_audio(
-        audio_path,
-        model_size=cfg.whisper.model_size,
-        language=cfg.whisper.language,
-        device=cfg.whisper.device,
-        compute_type=cfg.whisper.compute_type,
-    )
+        extract_audio(video, audio_path)
 
-    scenes = detect_scenes(
-        video,
-        threshold=cfg.scenes.threshold,
-        min_scene_length=cfg.scenes.min_scene_length,
-    )
+        utterances = transcribe_audio(
+            audio_path,
+            model_size=cfg.whisper.model_size,
+            language=cfg.whisper.language,
+            device=cfg.whisper.device,
+            compute_type=cfg.whisper.compute_type,
+        )
 
-    segments = build_segments(scenes, utterances)
+        scenes = detect_scenes(
+            video,
+            threshold=cfg.scenes.threshold,
+            min_scene_length=cfg.scenes.min_scene_length,
+        )
 
-    segments = extract_keyframes(
-        video, segments, frames_dir,
-        position=cfg.keyframes.position,
-        quality=cfg.keyframes.quality,
-        max_width=cfg.keyframes.max_width,
-    )
+        segments = build_segments(scenes, utterances)
 
-    if cfg.ai.enabled and not no_ai:
-        try:
-            segments = analyze_segments(
-                segments,
-                model=cfg.ai.model,
-                base_url=cfg.ai.base_url,
-                temperature=cfg.ai.temperature,
-                max_retries=cfg.ai.max_retries,
-            )
-        except AIAnalysisError as e:
-            log.error(f"[red]AI step failed:[/red] {e}")
-            log.warning("Continuing without titles/summaries…")
-    else:
-        log.info("[dim]AI step skipped[/dim]")
+        segments = extract_keyframes(
+            video, segments, frames_dir,
+            position=cfg.keyframes.position,
+            quality=cfg.keyframes.quality,
+            max_width=cfg.keyframes.max_width,
+        )
 
-    export_markdown(
-        segments, output,
-        title=_pretty_title(video.stem),
-        embed_frames=cfg.output.embed_frames,
-        include_transcript=cfg.output.include_transcript,
-    )
+        if cfg.ai.enabled and not no_ai:
+            try:
+                segments = analyze_segments(
+                    segments,
+                    model=cfg.ai.model,
+                    base_url=cfg.ai.base_url,
+                    temperature=cfg.ai.temperature,
+                    max_retries=cfg.ai.max_retries,
+                )
+            except AIAnalysisError as e:
+                log.error(f"[red]AI step failed:[/red] {e}")
+                log.warning("Continuing without titles/summaries…")
+        else:
+            log.info("[dim]AI step skipped[/dim]")
+
+        export_markdown(
+            segments, output,
+            title=_pretty_title(video.stem),
+            embed_frames=cfg.output.embed_frames,
+            include_transcript=cfg.output.include_transcript,
+        )
 
     log.info(f"[bold green]✓ Done.[/bold green] Open: [cyan]{output}[/cyan]")
-
 
 def _pretty_title(stem: str) -> str:
     """Convert 'my_lecture-01' → 'My Lecture 01 — Notes'."""
     return stem.replace("_", " ").replace("-", " ").title() + " — Notes"
+
+
+
 
 
 if __name__ == "__main__":
