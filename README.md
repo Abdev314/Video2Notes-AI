@@ -9,10 +9,10 @@
 ![PySceneDetect](https://img.shields.io/badge/PySceneDetect-scenes-yellow)
 ![Jinja2](https://img.shields.io/badge/Jinja2-templating-lightgrey)
 
-**Turn any lecture video into clean, structured study notes — automatically.**
+**Turn any video into clean, structured notes, automatically.**
+___
 
-Feed in a `.mp4`, get back a markdown file with chapters, screenshots, and summaries. Runs entirely on your own machine. No cloud, no API costs.
----
+
 
 ## The problem
 
