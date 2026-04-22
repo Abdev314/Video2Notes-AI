@@ -46,9 +46,9 @@ The code is organized into three layers:
 
 | Layer | Folder | Responsibility |
 |---|---|---|
-| **Models** | `src/video2notes/models/` | Data shapes (the `Segment` class). No behavior, just structure. |
-| **Modules** | `src/video2notes/modules/` | The seven pipeline steps. Each one is a pure function: data in → data out. |
-| **Utils** | `src/video2notes/utils/` | Config loading and logging. Boring infrastructure. |
+| **Models** | `src/models/` | Data shapes (the `Segment` class). No behavior, just structure. |
+| **Modules** | `src/modules/` | The seven pipeline steps. Each one is a pure function: data in → data out. |
+| **Utils** | `src/utils/` | Config loading and logging. Boring infrastructure. |
 
 Each module knows about the one before it (via the data it consumes) but nothing more. You could swap Whisper for Google Speech-to-Text tomorrow — only `transcribe.py` would change.
 
@@ -137,11 +137,11 @@ LLM run roughly 10-20× faster.
 
 ### Installation
 
+**Linux**
 ```bash
 # 1. Clone
 git clone https://github.com/you/video2notes-ai.git
 cd video2notes-ai
-
 
 # 2. Load pyenv into this shell
 export PYENV_ROOT="$HOME/.pyenv"
@@ -163,13 +163,11 @@ pip install -r requirements.txt
 
 # 6. Install FFmpeg (system-level)
 sudo apt install ffmpeg        # Debian/Ubuntu
-brew install ffmpeg            # macOS
 
 # 7. Install Ollama + download the LLM
 curl -fsSL https://ollama.com/install.sh | sh
 ollama pull llama3.1:8b        # ~4.7 GB, one-time download
 ```
-
 ### Usage
 
 ```bash
@@ -182,6 +180,43 @@ python src/main.py data/sample.mp4
 # Read the result
 code output/notes.md
 ```
+
+**Windows**
+
+```bash
+# Clone the repo
+git clone https://github.com/YOUR-USERNAME/video2notes-ai.git
+cd video2notes-ai
+
+# Create a virtual environment with Python 3.11 specifically
+py -3.11 -m venv venv
+
+# Activate the venv 
+venv\Scripts\activate
+
+# You should see (venv) appear at the start of your prompt
+
+# Install Python dependencies
+pip install --upgrade pip setuptools wheel
+pip install -r requirements.txt
+
+# Pull the LLM model (~4.7 GB download, takes 10-30 min)
+ollama pull llama3.1:8b
+```
+### Usage
+
+```bash
+# Drop a video into data\
+copy C:\path\to\your_lecture.mp4 data\sample.mp4
+
+# Run the pipeline
+python src\main.py data\sample.mp4
+
+# Open the result
+start output\notes.md
+```
+
+
 
 ### What you get
 
