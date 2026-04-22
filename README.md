@@ -1,9 +1,10 @@
-# 🎓 Video2Notes-AI
+# Video2Notes-AI
+
+`Python` `Whisper` `Ollama` `Llama3` `FFmpeg` `OpenCV` `PySceneDetect` `Jinja2`
 
 **Turn any lecture video into clean, structured study notes — automatically.**
 
 Feed in a `.mp4`, get back a markdown file with chapters, screenshots, and summaries. Runs entirely on your own machine. No cloud, no API costs.
-
 ---
 
 ## The problem
@@ -95,10 +96,6 @@ Everything is free and open source.
 
 Here's what the pipeline actually costs to run.
 
-### Memory footprint (peak)
-
-![ram-usage-chart.svg](docs/ram-usage-chart.svg)
-
 
 - **Whisper (`base` model)** — ~1.5 GB
 - **Ollama with Llama 3.1 8B** — ~6 GB, held for the whole AI phase
@@ -107,11 +104,13 @@ Here's what the pipeline actually costs to run.
 
 **Minimum practical RAM:** 8 GB. Recommended: 16 GB.
 
-### Time on CPU (no GPU)
+This chart shows CPU and RAM usage across the full pipeline run.
+It highlights how:
+- CPU usage remains steady during preprocessing stages
+- Memory spikes when loading the LLM (Ollama)
+- The AI analysis step dominates both time and resource consumption
 
-Rough numbers for a **10-minute lecture**:
-
-![cpu-time-chart.svg](docs/cpu-time-chart.svg)
+![resource_usage.png](docs/resource_usage.png)
 
 **Measured on a 2.5-minute tech explainer (7 chapters)**:
 
@@ -131,6 +130,9 @@ with more scene changes produce more chapters, so total time scales with
 chapter count rather than video length. On a GPU, both Whisper and the
 LLM run roughly 10-20× faster.
 
+# Pipeline execution log
+
+![Pipeline execution log.png](docs/Pipeline%20execution%20log.png)
 ---
 
 ## How the tool works
