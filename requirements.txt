@@ -70,3 +70,6 @@ weasyprint==62.3
 webencodings==0.5.1
 zopfli==0.4.1
 psutil==6.1.0
+
+pandas
+matplotlib
