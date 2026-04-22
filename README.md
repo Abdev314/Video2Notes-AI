@@ -139,32 +139,32 @@ LLM run roughly 10-20× faster.
 
 **Linux**
 ```bash
-# 1. Clone
+# Clone
 git clone https://github.com/you/video2notes-ai.git
 cd video2notes-ai
 
-# 2. Load pyenv into this shell
+# Load pyenv into this shell
 export PYENV_ROOT="$HOME/.pyenv"
 export PATH="$PYENV_ROOT/bin:$PATH"
 eval "$(pyenv init - bash)"
 
-# 3. Pin this folder to 3.11.13
+# Pin this folder to 3.11.13
 pyenv local 3.11.13
 
-# 4. Verify BEFORE making the venv
+# Verify BEFORE making the venv
 python --version      # MUST say Python 3.11.13
 
-# 4. Only now create the venv
+# Only now create the venv
 python -m venv env
 source env/bin/activate
 
-# 5. Install deps
+# Install deps
 pip install -r requirements.txt
 
-# 6. Install FFmpeg (system-level)
+# Install FFmpeg (system-level)
 sudo apt install ffmpeg        # Debian/Ubuntu
 
-# 7. Install Ollama + download the LLM
+# Install Ollama + download the LLM
 curl -fsSL https://ollama.com/install.sh | sh
 ollama pull llama3.1:8b        # ~4.7 GB, one-time download
 ```
