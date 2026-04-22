@@ -1,6 +1,13 @@
 # Video2Notes-AI
 
-`Python` `Whisper` `Ollama` `Llama3` `FFmpeg` `OpenCV` `PySceneDetect` `Jinja2`
+![Python](https://img.shields.io/badge/Python-3.11-blue)
+![Whisper](https://img.shields.io/badge/Whisper-ASR-black)
+![Ollama](https://img.shields.io/badge/Ollama-LLM-grey)
+![Llama3](https://img.shields.io/badge/Llama3-8B-orange)
+![FFmpeg](https://img.shields.io/badge/FFmpeg-video-red)
+![OpenCV](https://img.shields.io/badge/OpenCV-vision-green)
+![PySceneDetect](https://img.shields.io/badge/PySceneDetect-scenes-yellow)
+![Jinja2](https://img.shields.io/badge/Jinja2-templating-lightgrey)
 
 **Turn any lecture video into clean, structured study notes — automatically.**
 
