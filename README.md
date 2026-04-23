@@ -290,33 +290,7 @@ ai:
   temperature: 0.3
 ```
 
----
 
-## Project structure
-
-```
-video2notes-ai/
-├── config.yaml              ← all tunables
-├── requirements.txt
-├── data/                    ← user input videos
-├── output/                  ← generated notes + frames
-├── .cache/                  ← pipeline working files (auto-cleaned)
-└── src/
-    ├── models/segment.py    ← the Segment data class
-    ├── modules/             ← 7 pipeline steps
-    │   ├── audio.py
-    │   ├── transcribe.py
-    │   ├── scenes.py
-    │   ├── segments.py
-    │   ├── keyframes.py
-    │   ├── ai.py
-    │   └── export.py
-    ├── templates/
-    │   └── notes.md.j2      ← output template
-    └── utils/               ← config + logger
-```
-
----
 
 ## License
 
