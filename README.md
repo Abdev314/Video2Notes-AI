@@ -119,23 +119,37 @@ It highlights how:
 
 ![resource_usage.png](docs/resource_usage.png)
 
-**Measured on a 2.5-minute tech explainer (7 chapters)**:
+[//]: # (**Measured on a 2.5-minute tech explainer &#40;7 chapters&#41;**:)
 
-| Step | Duration |
-|---|---|
-| Audio extraction | 1 s |
-| Transcription | 15 s |
-| Scene detection | 4 s |
-| Segment builder | instant |
-| Keyframe extraction | 1 s |
-| AI analysis | **200 s** (~28s × 7 chapters) |
-| Markdown export | instant |
-| **Total** | **3 min 41 s** |
+[//]: # ()
+[//]: # (| Step | Duration |)
 
-The AI step dominates — it runs the LLM once per chapter. Longer videos
-with more scene changes produce more chapters, so total time scales with
-chapter count rather than video length. On a GPU, both Whisper and the
-LLM run roughly 10-20× faster.
+[//]: # (|---|---|)
+
+[//]: # (| Audio extraction | 1 s |)
+
+[//]: # (| Transcription | 15 s |)
+
+[//]: # (| Scene detection | 4 s |)
+
+[//]: # (| Segment builder | instant |)
+
+[//]: # (| Keyframe extraction | 1 s |)
+
+[//]: # (| AI analysis | **200 s** &#40;~28s × 7 chapters&#41; |)
+
+[//]: # (| Markdown export | instant |)
+
+[//]: # (| **Total** | **3 min 41 s** |)
+
+[//]: # ()
+[//]: # (The AI step dominates — it runs the LLM once per chapter. Longer videos)
+
+[//]: # (with more scene changes produce more chapters, so total time scales with)
+
+[//]: # (chapter count rather than video length. On a GPU, both Whisper and the)
+
+[//]: # (LLM run roughly 10-20× faster.)
 
 # Pipeline execution log
 

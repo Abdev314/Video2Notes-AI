@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field, field_validator
 
 class Segment(BaseModel):
     """A single chapter of the lecture — the pipeline's unit of work."""
-    model_config = {"extra": "allow"}   # ← add this line
+    model_config = {"extra": "allow"}   
 
 
     # --- Identity ---
