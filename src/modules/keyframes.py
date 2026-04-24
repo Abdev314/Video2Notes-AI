@@ -1,5 +1,5 @@
 """
-Step 5 of the pipeline — keyframe extraction.
+keyframe extraction.
 
 For each Segment, seeks into the video and saves one representative frame
 as a JPEG. Attaches the saved path back to the Segment.
@@ -23,9 +23,6 @@ class KeyframeExtractionError(RuntimeError):
 
 
 Position = Literal["start", "middle", "end"]
-
-# feat: implement keyframe extraction module
-
 
 def extract_keyframes(
     video_path: Path,

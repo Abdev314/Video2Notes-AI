@@ -1,5 +1,5 @@
 """
-Step 7 of the pipeline — export to Markdown.
+Export to Markdown.
 
 Renders the enriched Segments into a clean Markdown document using a
 Jinja2 templates. Image paths are made relative to the output file so

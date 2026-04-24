@@ -1,5 +1,5 @@
 """
-Step 6 of the pipeline — AI analysis.
+AI analysis.
 
 For each Segment, asks a local LLM (via Ollama) to produce:
   - a chapter title

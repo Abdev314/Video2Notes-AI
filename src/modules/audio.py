@@ -1,5 +1,5 @@
 """
-Step 1 of the pipeline — audio extraction.
+Audio extraction.
 
 Takes a video file of any format (.mp4, .mkv, .webm, etc.) and produces a
 16 kHz mono WAV file, which is the native input format of Whisper.
@@ -27,9 +27,6 @@ def ensure_ffmpeg_available() -> None:
     if shutil.which("ffmpeg") is None:
         raise AudioExtractionError(
             "FFmpeg not found on PATH.\n"
-            "Install it with: sudo apt install ffmpeg  (Debian/Ubuntu)\n"
-            "                 brew install ffmpeg      (macOS)\n"
-            "                 winget install ffmpeg    (Windows)"
         )
 
 

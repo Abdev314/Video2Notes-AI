@@ -1,5 +1,5 @@
 """
-Step 4 of the pipeline — segment builder.
+segment builder.
 
 Combines the output of Phase 4 (timestamped utterances from Whisper)
 with the output of Phase 5 (scene boundaries from PySceneDetect) into
