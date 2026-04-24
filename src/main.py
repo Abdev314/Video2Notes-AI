@@ -1,6 +1,4 @@
 """
-`.
-
 Wraps the 7-step pipeline so users can run the whole tool from the
 command line without writing any Python.
 """
@@ -8,7 +6,6 @@ command line without writing any Python.
 from __future__ import annotations
 
 from pathlib import Path
-from utils.monitor import ResourceMonitor
 
 import click
 
@@ -117,8 +114,6 @@ def main(video: Path, output: Path, no_ai: bool, config: Path) -> None:
 def _pretty_title(stem: str) -> str:
     """Convert 'my_lecture-01' → 'My Lecture 01 — Notes'."""
     return stem.replace("_", " ").replace("-", " ").title() + " — Notes"
-
-
 
 
 
