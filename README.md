@@ -292,9 +292,3 @@ ai:
   model: "llama3.1:8b"
   temperature: 0.3
 ```
-
-
-
-## License
-
-MIT
