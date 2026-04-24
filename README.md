@@ -38,15 +38,14 @@ The output is a ready-to-read markdown document with:
 - **Chapters** auto-detected from scene changes
 - **One screenshot** per chapter from the video
 - **AI-written title + summary + key points** for each chapter
-- **Timestamps** linking back to exact moments in the video
-
+- **Timestamps** showing the exact moments covered by each chapter
 ---
 
 ## Architecture
 
 The tool is a **pipeline** — data flows through seven independent steps, each doing one thing well.
 
-![pipeline-diagram.svg](docs/pipeline-diagram.svg)
+![Detailed architecture map](docs/diagram.png)
 
 ### The layers
 
@@ -55,7 +54,7 @@ The code is organized into three layers:
 | Layer | Folder | Responsibility |
 |---|---|---|
 | **Models** | `src/models/` | Data shapes (the `Segment` class). No behavior, just structure. |
-| **Modules** | `src/modules/` | The seven pipeline steps. Each one is a pure function: data in → data out. |
+| **Modules** | `src/modules/` | The seven pipeline steps. Each one handles one stage of the workflow: input in, enriched output out. |
 | **Utils** | `src/utils/` | Config loading and logging. Boring infrastructure. |
 
 Each module knows about the one before it (via the data it consumes) but nothing more. You could swap Whisper for Google Speech-to-Text tomorrow — only `transcribe.py` would change.
@@ -69,11 +68,11 @@ Segment(
   id=1,
   start_time=0.0,
   end_time=58.29,
-  transcript="Redis, an in-memory multi-model database...",   # from step 4
-  frame_path="output/frames/segment_001.jpg",                 # from step 5
-  title="Introduction to Redis",                              # from step 6
-  summary="Redis is a fast in-memory database...",            # from step 6
-  key_points=["Sub-millisecond latency", ...],                # from step 6
+  transcript="spoken text recognized from the video...",   # from step 4
+  frame_path="output/frames/segment_001.jpg",              # from step 5
+  title="LLM-generated chapter title",                     # from step 6
+  summary="LLM-generated summary of this segment...",      # from step 6
+  key_points=["LLM-generated key point", ...],             # from step 6
 )
 ```
 
@@ -103,19 +102,23 @@ Everything is free and open source.
 
 Here's what the pipeline actually costs to run.
 
+- **Audio extraction (FFmpeg)** — ~0.1 GB
+- **Whisper transcription (`base` model)** — ~1.5 GB
+- **Scene detection (PySceneDetect)** — ~0.3 GB
+- **Segment building (Python only)** — ~0.1 GB
+- **Keyframe extraction (OpenCV)** — ~0.4 GB
+- **AI analysis (Ollama + Llama 3.1 8B)** — ~6.0 GB, held for the whole AI phase
+- **Markdown export (Jinja2)** — ~0.1 GB
 
-- **Whisper (`base` model)** — ~1.5 GB
-- **Ollama with Llama 3.1 8B** — ~6 GB, held for the whole AI phase
-- **OpenCV frame buffer** — negligible
-- **Everything else** — under 100 MB
-
+**Peak RAM:** ~6 GB during AI analysis.  
 **Minimum practical RAM:** 8 GB. Recommended: 16 GB.
 
-This chart shows CPU and RAM usage across the full pipeline run.
+
+This chart shows overall system CPU and RAM usage during one sample run of the full pipeline.
 It highlights how:
-- CPU usage remains steady during preprocessing stages
-- Memory spikes when loading the LLM (Ollama)
-- The AI analysis step dominates both time and resource consumption
+- CPU remains active across the preprocessing stages
+- RAM rises sharply and stays elevated during the AI analysis phase
+- The AI step is the main resource bottleneck in the end-to-end run
 
 ![resource_usage.png](docs/resource_usage.png)
 
@@ -163,7 +166,7 @@ It highlights how:
 **Linux**
 ```bash
 # Clone
-git clone https://github.com/you/video2notes-ai.git
+git clone https://github.com/<your-username>/video2notes-ai.git
 cd video2notes-ai
 
 # Load pyenv into this shell
@@ -208,7 +211,7 @@ code output/notes.md
 
 ```bash
 # Clone the repo
-git clone https://github.com/YOUR-USERNAME/video2notes-ai.git
+git clone https://github.com/<your-username>/video2notes-ai.git
 cd video2notes-ai
 
 # Create a virtual environment with Python 3.11 specifically
