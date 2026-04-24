@@ -258,18 +258,18 @@ output/
 Each `notes.md` chapter looks like this:
 
 ```markdown
-## Chapter 1 — Introduction to Redis
+## Chapter 1 — Example Chapter Title
 ⏱ 00:00:00 – 00:00:58 · 58.3s
 
 ![Chapter 1](frames/segment_001.jpg)
 
-Redis is an in-memory multi-model database created in 2009,
-designed for sub-millisecond latency...
+This section summarizes the main idea covered in the chapter
+using a short, readable paragraph...
 
 **Key points:**
-- Stands for Remote Dictionary Server
-- In-memory reads, disk persistence
-- Used by Twitter and other high-traffic sites
+- Important concept or takeaway
+- Supporting detail from the video
+- Actionable point, example, or definition
 ```
 
 ---
