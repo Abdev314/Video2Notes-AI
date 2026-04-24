@@ -1,9 +1,9 @@
 """
-Config loader — reads config.yaml and .env into a single typed object.
+Config loader — reads config.yaml into a single typed object.
 
 Usage anywhere in the project:
 
-    from video2notes.utils.config import load_config
+    from src.utils.config import load_config
     cfg = load_config()
     print(cfg.whisper.model_size)
 """
