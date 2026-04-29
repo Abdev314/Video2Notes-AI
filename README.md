@@ -166,7 +166,7 @@ It highlights how:
 **Linux**
 ```bash
 # Clone
-git clone https://github.com/<your-username>/video2notes-ai.git
+git clone https://github.com/Abdev314/video2notes-ai.git
 cd video2notes-ai
 
 # Load pyenv into this shell
@@ -211,7 +211,7 @@ code output/notes.md
 
 ```bash
 # Clone the repo
-git clone https://github.com/<your-username>/video2notes-ai.git
+git clone https://github.com/Abdev314/video2notes-ai.git
 cd video2notes-ai
 
 # Create a virtual environment with Python 3.11 specifically
