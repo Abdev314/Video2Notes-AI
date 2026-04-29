@@ -13,7 +13,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from utils.logger import get_logger
+from src.utils.logger import get_logger
 
 log = get_logger(__name__)
 

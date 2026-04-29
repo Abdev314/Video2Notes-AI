@@ -12,8 +12,8 @@ from typing import Literal
 
 import cv2
 
-from models.segment import Segment
-from utils.logger import get_logger
+from src.models.segment import Segment
+from src.utils.logger import get_logger
 
 log = get_logger(__name__)
 
