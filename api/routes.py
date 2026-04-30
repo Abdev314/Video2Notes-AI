@@ -56,6 +56,7 @@ def process_video():
             result = run_pipeline(
                 video=Path(video_path),
                 output=output_dir / "notes.md",        # ← This is where you put the second part
+                no_ai=False,
             )
             jobs[job_id] = {"status": "done", "result": result, "error": None}
         except Exception as e:
