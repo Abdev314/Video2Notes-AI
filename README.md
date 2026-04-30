@@ -233,6 +233,9 @@ npm run dev      # development server at http://localhost:5173
 source env/bin/activate
 python api/app.py
 
+#or
+PYTHONPATH=. python -m api.app
+
 # Terminal 2: Build vue project
 cd frontend
 npm run build
