@@ -13,6 +13,8 @@
 
 **Turn any video into clean, structured notes — from the terminal or your browser.**
 
+
+
 ---
 
 ## The problem
@@ -40,9 +42,24 @@ The output is a ready-to-read markdown document with:
 - **One screenshot** per chapter from the video
 - **AI-written title + summary + key points** for each chapter
 - **Timestamps** showing the exact moments covered by each chapter
-
 ---
 
+### 1. Upload Screen
+![Upload Screen](docs/Upload%20Screen.png)
+
+### 2. AI Processing in Progress
+![AI Processing](docs/AI%20Processing.png)
+
+### 3. Final Result with Markdown 
+![Result with Markdown](docs/Result%20with%20Markdown.png)
+
+### 4. Backend Terminal Log
+![Backend Processing Log](docs/Backend%20Processing%20Log.png)
+
+### 5. Successful Completion
+![Successful completion log](docs/Successful%20completion%20log.png)
+
+---------
 ## Architecture
 
 The tool is built in three layers that work together: a **Vue frontend**, a **Flask REST API**, and a **7-step AI pipeline**.
