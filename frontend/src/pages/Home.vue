@@ -3,7 +3,7 @@
     <div class="max-w-lg mx-auto">
 
       <!-- Header -->
-      <div class=" mt-20 text-center mb-6">
+      <div class="mt-20 text-center mb-6">
         <h1 class="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">
           Video to Notes
         </h1>
@@ -13,7 +13,7 @@
       <!-- Main Card -->
       <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm shadow-slate-200/60 p-5 border border-slate-100 transition-all duration-300">
 
-        <!-- Upload Section (shown when idle or after completion) -->
+        <!-- Upload Section -->
         <Transition name="fade" mode="out-in">
           <div v-if="!isProcessing" key="upload" class="space-y-4">
 
@@ -25,7 +25,7 @@
               @dragover.prevent
             >
               <div class="flex flex-col items-center">
-                <span class="text-3xl mb-2 text-slate-300 group-hover:text-indigo-400 transition-colors">📤</span>
+                <span class="text-3xl mb-2 text-slate-300 group-hover:text-indigo-400 transition-colors">↓</span>
                 <p class="text-sm font-medium text-slate-600 group-hover:text-indigo-600 transition-colors">
                   Drop video or click to upload
                 </p>
@@ -39,7 +39,7 @@
             <!-- Selected File -->
             <Transition name="slide">
               <div v-if="selectedFile" class="bg-slate-50 rounded-xl p-3 flex items-center gap-3">
-                <span class="text-lg">🎞️</span>
+                <span class="text-lg">🎬</span>
                 <div class="flex-1 min-w-0">
                   <p class="text-sm font-medium text-slate-700 truncate">{{ selectedFile.name }}</p>
                   <p class="text-xs text-slate-400">{{ formatFileSize(selectedFile.size) }}</p>
@@ -69,12 +69,12 @@
             </button>
           </div>
 
-          <!-- Processing Section (replaces upload while AI works) -->
+          <!-- Processing Section -->
           <div v-else key="processing" class="space-y-4">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <div class="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
-                  <span class="text-xl animate-pulse">🤖</span>
+                  <span class="text-xl animate-pulse">⚙️</span>
                 </div>
                 <div>
                   <p class="text-sm font-medium text-slate-700">AI is working...</p>
@@ -118,58 +118,87 @@
           </div>
         </Transition>
 
-        <!-- Result Section (appears below after completion) -->
+        <!-- Result Section -->
         <Transition name="slide-up">
-          <div v-if="isDone && jobId" class="mt-4 pt-4 border-t border-slate-100">
+          <div v-if="isDone && jobId" class="mt-5 pt-5 border-t border-slate-100 space-y-4">
 
-            <!-- Success State -->
-            <div class="flex items-start gap-3">
-              <!-- Soft success icon -->
-              <div class="shrink-0 w-8 h-8 bg-emerald-50 rounded-lg flex items-center justify-center">
-                <span class="text-lg animate-[bounce_0.6s_ease-out]">✨</span>
+            <!-- Success Header -->
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 bg-emerald-50 rounded-xl flex items-center justify-center">
+                <span class="text-lg animate-[bounce_0.5s_ease-out]">✨</span>
               </div>
-
-              <!-- Message + Actions -->
-              <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium text-slate-700">
-                  Your notes are ready
-                </p>
-                <p class="text-xs text-slate-400 mt-0.5">
-                  Download or start a new video anytime
-                </p>
-
-                <!-- Elegant Button Group -->
-                <div class="flex gap-2 mt-3">
-                  <!-- Primary: Download -->
-                  <button
-                    @click="downloadNotes"
-                    class="group flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-xs font-medium py-2.5 rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 shadow-sm shadow-emerald-200/40 hover:shadow-emerald-300/60 active:scale-[0.98] active:shadow-none"
-                  >
-                    <span class="transition-transform group-hover:-translate-y-0.5">↓</span>
-                    <span>Get notes.md</span>
-                  </button>
-
-                  <!-- Secondary: New Video -->
-                  <button
-                    @click="resetForNext"
-                    class="group px-4 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-800 text-xs font-medium py-2.5 rounded-xl border border-slate-200 hover:border-slate-300 transition-all duration-200 active:scale-[0.98] shadow-sm shadow-slate-100/40 hover:shadow-slate-200/60"
-                  >
-                    <span class="transition-transform group-hover:translate-x-0.5">New →</span>
-                  </button>
-                </div>
+              <div>
+                <p class="text-sm font-medium text-slate-800">Your notes are ready</p>
+                <p class="text-xs text-slate-400">Download in your preferred format</p>
               </div>
             </div>
 
+            <!-- Download Button with Format Selector -->
+            <div class="relative" ref="dropdownRef">
+              <div class="flex shadow-sm rounded-xl overflow-hidden">
+                <!-- Primary Download Button (dynamic label) -->
+                <button
+                  @click="downloadCurrentFormat"
+                  class="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-sm font-medium py-2.5 transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2"
+                >
+                  <span>↓ Get notes.{{ currentFormatExt }}</span>
+                </button>
+
+                <!-- Format Selector Toggle -->
+                <button
+                  @click.stop="toggleMenu"
+                  class="w-10 bg-emerald-600/90 hover:bg-emerald-700 text-white/90 transition-all duration-200 active:scale-[0.98] flex items-center justify-center border-l border-white/20"
+                  :aria-label="'Change format'"
+                >
+                  <svg class="w-4 h-4 transition-transform duration-200" :class="{ 'rotate-180': showDownloadMenu }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Format Dropdown Menu -->
+              <Transition name="fade-scale">
+                <div
+                  v-if="showDownloadMenu"
+                  class="absolute right-0 mt-2 w-48 bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-slate-100 py-1.5 z-20 origin-top-right"
+                  @click.stop
+                >
+                  <button
+                    v-for="fmt in formats"
+                    :key="fmt.value"
+                    @click="selectFormat(fmt.value); closeMenu()"
+                    class="w-full px-4 py-2.5 text-left hover:bg-slate-50 flex items-center justify-between transition-colors"
+                    :class="{ 'bg-slate-50': selectedFormat === fmt.value }"
+                  >
+                    <span class="text-sm font-medium text-slate-700">{{ fmt.label }}</span>
+                    <span class="text-[10px] text-slate-400">.{{ fmt.ext }}</span>
+                  </button>
+                </div>
+              </Transition>
+            </div>
+
+            <!-- New Video -->
+            <button
+              @click="resetForNext"
+              class="w-full text-xs text-slate-400 hover:text-slate-600 py-2 transition-colors flex items-center justify-center gap-1"
+            >
+              <span>↻</span> Upload another video
+            </button>
           </div>
         </Transition>
+
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onUnmounted } from 'vue'
+import {ref, onUnmounted, onMounted, computed} from 'vue'
+import { saveAs } from 'file-saver'
+import jsPDF from 'jspdf'
+import { Document, Packer, Paragraph, TextRun, HeadingLevel } from 'docx'
 
+// State
 const fileInput = ref<HTMLInputElement | null>(null)
 const selectedFile = ref<File | null>(null)
 const isUploading = ref(false)
@@ -180,9 +209,84 @@ const jobId = ref<string | null>(null)
 const progress = ref(0)
 const markdownContent = ref<string>('')
 
-let pollInterval: number | null = null
-let abortController: AbortController | null = null
+// Download format state
+const selectedFormat = ref<'md' | 'pdf' | 'docx'>('md')
+const showDownloadMenu = ref(false)
+const dropdownRef = ref<HTMLElement | null>(null)
 
+const formats = [
+  { label: 'Markdown', value: 'md' as const, ext: 'md' },
+  { label: 'PDF', value: 'pdf' as const, ext: 'pdf' },
+  { label: 'Word', value: 'docx' as const, ext: 'docx' }
+] as const
+
+const currentFormatExt = computed(() =>
+  formats.find(f => f.value === selectedFormat.value)?.ext || 'md'
+)
+
+// Dropdown handlers
+const toggleMenu = () => showDownloadMenu.value = !showDownloadMenu.value
+const closeMenu = () => showDownloadMenu.value = false
+const selectFormat = (fmt: 'md' | 'pdf' | 'docx') => { selectedFormat.value = fmt }
+
+const handleClickOutside = (e: MouseEvent) => {
+  if (dropdownRef.value && !dropdownRef.value.contains(e.target as Node)) {
+    closeMenu()
+  }
+}
+
+onMounted(() => document.addEventListener('click', handleClickOutside))
+onUnmounted(() => document.removeEventListener('click', handleClickOutside))
+
+// Download functions (backend-agnostic)
+const downloadCurrentFormat = () => {
+  if (!markdownContent.value || !jobId.value) return
+  const filename = `notes-${jobId.value.slice(0, 8)}`
+
+  if (selectedFormat.value === 'md') {
+    downloadMarkdown(filename)
+  } else if (selectedFormat.value === 'pdf') {
+    downloadPDF(filename)
+  } else if (selectedFormat.value === 'docx') {
+    downloadWord(filename)
+  }
+}
+
+const downloadMarkdown = (filename: string) => {
+  const blob = new Blob([markdownContent.value], { type: 'text/markdown;charset=utf-8' })
+  saveAs(blob, `${filename}.md`)
+}
+
+const downloadPDF = (filename: string) => {
+  const doc = new jsPDF('p', 'mm', 'a4')
+  const margin = 20
+  const pageWidth = doc.internal.pageSize.getWidth()
+  const textWidth = pageWidth - 2 * margin
+
+  doc.setFontSize(16)
+  doc.text("Video to Notes", pageWidth / 2, 25, { align: 'center' })
+  doc.setFontSize(11)
+
+  const lines = doc.splitTextToSize(markdownContent.value, textWidth)
+  doc.text(lines, margin, 45)
+  doc.save(`${filename}.pdf`)
+}
+
+const downloadWord = async (filename: string) => {
+  const doc = new Document({
+    sections: [{
+      properties: {},
+      children: [
+        new Paragraph({ text: "Video to Notes", heading: HeadingLevel.HEADING_1 }),
+        new Paragraph({ children: [new TextRun({ text: markdownContent.value, size: 24 })] })
+      ]
+    }]
+  })
+  const blob = await Packer.toBlob(doc)
+  saveAs(blob, `${filename}.docx`)
+}
+
+// File handling
 const triggerFileInput = () => fileInput.value?.click()
 
 const handleFileSelect = (e: Event) => {
@@ -208,9 +312,12 @@ const formatFileSize = (bytes: number): string => {
   return `${parseFloat((bytes / k ** i).toFixed(2))} ${sizes[i]}`
 }
 
+// Polling & upload
+let pollInterval: ReturnType<typeof setInterval> | null = null
+let abortController: AbortController | null = null
+
 const startPolling = (id: string) => {
   if (pollInterval) clearInterval(pollInterval)
-
   pollInterval = setInterval(async () => {
     try {
       const res = await fetch(`http://127.0.0.1:5000/api/status/${id}`)
@@ -219,7 +326,6 @@ const startPolling = (id: string) => {
       if (data.status === 'done') {
         clearInterval(pollInterval!)
         progress.value = 100
-
         try {
           const notesRes = await fetch(`http://127.0.0.1:5000/api/notes/${id}`)
           markdownContent.value = await notesRes.text()
@@ -235,24 +341,18 @@ const startPolling = (id: string) => {
         alert('Processing failed: ' + (data.error || 'Unknown error'))
         isProcessing.value = false
       } else if (data.status === 'canceled') {
-        // Backend confirmed cancellation
         clearInterval(pollInterval!)
         isProcessing.value = false
         isCanceling.value = false
       } else {
-        if (progress.value < 92) {
-          progress.value += Math.random() * 6 + 1
-        }
+        if (progress.value < 92) progress.value += Math.random() * 6 + 1
       }
-    } catch (err) {
-      console.error('Polling error:', err)
-    }
+    } catch (err) { console.error('Polling error:', err) }
   }, 2000)
 }
 
 const uploadVideo = async () => {
   if (!selectedFile.value) return
-
   isUploading.value = true
   isProcessing.value = true
   isDone.value = false
@@ -266,12 +366,9 @@ const uploadVideo = async () => {
 
   try {
     const res = await fetch('http://127.0.0.1:5000/api/process', {
-      method: 'POST',
-      body: formData,
-      signal: abortController.signal
+      method: 'POST', body: formData, signal: abortController.signal
     })
     const data = await res.json()
-
     if (res.ok && data.job_id) {
       jobId.value = data.job_id
       startPolling(data.job_id)
@@ -280,59 +377,26 @@ const uploadVideo = async () => {
       isProcessing.value = false
     }
   } catch (err: any) {
-    if (err.name === 'AbortError') {
-      // Upload was canceled - expected
-      console.log('Upload canceled')
-    } else {
-      alert('Cannot connect to server')
-    }
+    if (err.name !== 'AbortError') alert('Cannot connect to server')
     isProcessing.value = false
-  } finally {
-    isUploading.value = false
-  }
+  } finally { isUploading.value = false }
 }
 
 const cancelProcessing = async () => {
   if (!jobId.value || isCanceling.value) return
-
   isCanceling.value = true
-
-  // Stop polling first
-  if (pollInterval) {
-    clearInterval(pollInterval)
-    pollInterval = null
-  }
-
-  // Abort any pending upload request
-  if (abortController) {
-    abortController.abort()
-    abortController = null
-  }
-
+  if (pollInterval) { clearInterval(pollInterval); pollInterval = null }
+  if (abortController) { abortController.abort(); abortController = null }
   try {
-    // Try to notify backend (graceful if endpoint doesn't exist)
     await fetch(`http://127.0.0.1:5000/api/cancel/${jobId.value}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' }
-    }).catch(() => {
-      // Backend may not have cancel endpoint - that's okay
-      console.log('Cancel endpoint not available, cleaning up locally')
-    })
+      method: 'POST', headers: { 'Content-Type': 'application/json' }
+    }).catch(() => {})
   } finally {
-    // Reset UI state
     isProcessing.value = false
     isCanceling.value = false
     isDone.value = false
     progress.value = 0
     markdownContent.value = ''
-
-    // Keep selectedFile so user can retry or remove
-  }
-}
-
-const downloadNotes = () => {
-  if (jobId.value) {
-    window.open(`http://127.0.0.1:5000/api/notes/${jobId.value}`, '_blank')
   }
 }
 
@@ -344,6 +408,7 @@ const resetForNext = () => {
   isProcessing.value = false
   isCanceling.value = false
   progress.value = 0
+  selectedFormat.value = 'md'
   if (fileInput.value) fileInput.value.value = ''
 }
 
@@ -354,60 +419,44 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* Transitions */
+/* Smooth, relaxing transitions */
 .fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.2s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
+.fade-leave-active { transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
 
 .slide-enter-active,
-.slide-leave-active {
-  transition: all 0.25s ease-out;
-}
-.slide-enter-from {
-  opacity: 0;
-  transform: translateY(-6px);
-}
-.slide-leave-to {
-  opacity: 0;
-  transform: translateY(6px);
-}
+.slide-leave-active { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+.slide-enter-from { opacity: 0; transform: translateY(-8px); }
+.slide-leave-to { opacity: 0; transform: translateY(8px); }
 
 .slide-up-enter-active,
-.slide-up-leave-active {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.slide-up-enter-from {
-  opacity: 0;
-  transform: translateY(12px);
-}
-.slide-up-leave-to {
-  opacity: 0;
-  transform: translateY(-8px);
-}
+.slide-up-leave-active { transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
+.slide-up-enter-from { opacity: 0; transform: translateY(16px); }
+.slide-up-leave-to { opacity: 0; transform: translateY(-10px); }
 
-/* Focus states */
+.fade-scale-enter-active,
+.fade-scale-leave-active { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+.fade-scale-enter-from { opacity: 0; transform: scale(0.97) translateY(-4px); }
+.fade-scale-leave-to { opacity: 0; transform: scale(0.98) translateY(-2px); }
+
+/* Gentle focus */
 button:focus-visible {
   outline: 2px solid rgb(129 140 248 / 0.35);
   outline-offset: 2px;
 }
 
-/* Scrollbar for preview */
-pre::-webkit-scrollbar {
-  height: 4px;
+/* Subtle bounce for success */
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
 }
-pre::-webkit-scrollbar-track {
-  background: transparent;
-}
-pre::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 2px;
-}
-pre::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 </style>
