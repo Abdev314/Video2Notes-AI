@@ -12,7 +12,7 @@ from pathlib import Path
 
 from scenedetect import open_video, SceneManager
 
-from scenedetect.detectors import ContentDetector, AdaptiveDetector
+from scenedetect.detectors import AdaptiveDetector
 
 from src.utils.logger import get_logger
 
