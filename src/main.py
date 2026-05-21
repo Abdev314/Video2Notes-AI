@@ -29,7 +29,6 @@ def run_pipeline(
     """
     log = get_logger("video2notes")
     cfg = load_config(config)
-
     cache_dir = Path(cfg.paths.cache_dir)
     cache_dir.mkdir(parents=True, exist_ok=True)
 
@@ -40,7 +39,6 @@ def run_pipeline(
 
     with ResourceMonitor(Path(".cache/monitor.csv"), interval=1.0):
         extract_audio(video, audio_path)
-
         utterances = transcribe_audio(
             audio_path,
             model_size=cfg.whisper.model_size,
@@ -48,22 +46,18 @@ def run_pipeline(
             device=cfg.whisper.device,
             compute_type=cfg.whisper.compute_type,
         )
-
         scenes = detect_scenes(
             video,
             threshold=cfg.scenes.threshold,
             min_scene_length=cfg.scenes.min_scene_length,
         )
-
         segments = build_segments(scenes, utterances)
-
         segments = extract_keyframes(
             video, segments, frames_dir,
             position=cfg.keyframes.position,
             quality=cfg.keyframes.quality,
             max_width=cfg.keyframes.max_width,
         )
-
         if cfg.ai.enabled and not no_ai:
             try:
                 segments = analyze_segments(
@@ -76,22 +70,34 @@ def run_pipeline(
             except AIAnalysisError as e:
                 log.error(f"[red]AI step failed:[/red] {e}")
                 log.warning("Continuing without titles/summaries…")
-        else:
-            log.info("[dim]AI step skipped[/dim]")
 
+        # Export relative version (for web / markdown preview)
         export_markdown(
-            segments, output,
+            segments,
+            output,
             title=_pretty_title(video.stem),
-            embed_frames=cfg.output.embed_frames,
+            embed_frames=False,                    # Relative paths for web
+            include_transcript=cfg.output.include_transcript,
+        )
+
+        # === NEW: Also create embedded version for PDF/Word ===
+        embedded_path = output.parent / "notes_embedded.md"
+        export_markdown(
+            segments,
+            embedded_path,
+            title=_pretty_title(video.stem),
+            embed_frames=True,                     # ← Base64 images (KEY FIX)
             include_transcript=cfg.output.include_transcript,
         )
 
     log.info(f"[bold green]✓ Done.[/bold green] Open: [cyan]{output}[/cyan]")
 
     return {
-        "notes_path": str(output),
+        "notes_path": str(output),           # relative version
+        "embedded_notes_path": str(embedded_path),  # ← New
         "frames_dir": str(frames_dir),
         "segment_count": len(segments),
+        "segments": segments,                # ← Important for re-export
     }
 
 

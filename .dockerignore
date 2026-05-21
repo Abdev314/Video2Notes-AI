@@ -1,0 +1,16 @@
+.git
+.idea
+.ruff_cache
+__pycache__
+*.pyc
+
+output
+data
+.cache
+
+frontend/node_modules
+frontend/dist
+
+env
+tests
+
