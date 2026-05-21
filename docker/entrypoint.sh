@@ -32,5 +32,30 @@ print("[prefetch] done")
 PY
 fi
 
-exec "$@"
+# Start Ollama if installed. Prefetching a model requires the server.
+# - Set OLLAMA_ENABLE=1 to run the server even if you don't prefetch.
+# - Set PREFETCH_OLLAMA_MODEL=1 (default) to pull OLLAMA_MODEL on startup.
+if command -v ollama >/dev/null 2>&1; then
+  if [[ "${OLLAMA_ENABLE:-0}" == "1" || "${PREFETCH_OLLAMA_MODEL:-1}" == "1" ]]; then
+    ollama serve >/tmp/ollama-serve.log 2>&1 &
+    # Best-effort readiness wait (avoid failing the container if Ollama is slow to start).
+    for _ in $(seq 1 20); do
+      if ollama list >/dev/null 2>&1; then
+        break
+      fi
+      sleep 0.25
+    done
+  fi
 
+  if [[ "${PREFETCH_OLLAMA_MODEL:-1}" == "1" ]]; then
+    ollama pull "${OLLAMA_MODEL:-llama3.1:8b}" || true
+    echo "[prefetch] Ollama model ready"
+  fi
+else
+  # Keep startup resilient if the image is built without Ollama.
+  if [[ "${OLLAMA_ENABLE:-0}" == "1" || "${PREFETCH_OLLAMA_MODEL:-0}" == "1" ]]; then
+    echo "[warn] ollama binary not found; skipping Ollama startup"
+  fi
+fi
+
+exec "$@"

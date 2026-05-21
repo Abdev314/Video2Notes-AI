@@ -36,7 +36,11 @@ RUN apt-get update \
     libgl1 \
     shared-mime-info \
     fonts-dejavu-core \
-  && rm -rf /var/lib/apt/lists/*
+  && rm -rf /var/lib/apt/lists/* \
+  && curl -fsSL https://ollama.com/install.sh | sh
+
+
+
 
 # Python runtime env
 ENV PYTHONDONTWRITEBYTECODE=1 \
