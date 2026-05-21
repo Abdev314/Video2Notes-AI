@@ -3,7 +3,7 @@ Logger — one shared setup for all modules.
 
 Usage:
 
-    from video2notes.utils.logger import get_logger
+    from src.utils.logger import get_logger
     log = get_logger(__name__)
     log.info("Starting transcription…")
     log.error("Something broke")

@@ -6,7 +6,7 @@ __pycache__/
 *$py.class
 *.so
 .Python
-
+frontend/node_modules
 # --- Distribution / packaging ---
 *.egg
 *.egg-info/

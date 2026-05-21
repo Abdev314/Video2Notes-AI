@@ -188,8 +188,17 @@
         </Transition>
 
       </div>
+
+
+  </div>
+          <!-- AI Status Dashboard - Full Page Section -->
+    <div class="mt-16">
+      <h2 class="text-2xl font-semibold mb-6 text-center">System Status</h2>
+      <AIStatusPanel />
     </div>
   </div>
+
+
 </template>
 
 <script setup lang="ts">
@@ -197,7 +206,7 @@ import {ref, onUnmounted, onMounted, computed} from 'vue'
 import { saveAs } from 'file-saver'
 import jsPDF from 'jspdf'
 import { Document, Packer, Paragraph, TextRun, HeadingLevel } from 'docx'
-
+import AIStatusPanel from "@/pages/AIStatusPanel.vue";
 // State
 const fileInput = ref<HTMLInputElement | null>(null)
 const selectedFile = ref<File | null>(null)
@@ -318,6 +327,7 @@ let abortController: AbortController | null = null
 
 const startPolling = (id: string) => {
   if (pollInterval) clearInterval(pollInterval)
+
   pollInterval = setInterval(async () => {
     try {
       const res = await fetch(`http://127.0.0.1:5000/api/status/${id}`)
@@ -329,26 +339,33 @@ const startPolling = (id: string) => {
         try {
           const notesRes = await fetch(`http://127.0.0.1:5000/api/notes/${id}`)
           markdownContent.value = await notesRes.text()
-          isDone.value = true
-          isProcessing.value = false
-        } catch {
-          markdownContent.value = 'Notes generated (preview unavailable)'
-          isDone.value = true
-          isProcessing.value = false
-        }
+        } catch {}
+        isDone.value = true
+        isProcessing.value = false
+
       } else if (data.status === 'failed') {
         clearInterval(pollInterval!)
         alert('Processing failed: ' + (data.error || 'Unknown error'))
         isProcessing.value = false
+
       } else if (data.status === 'canceled') {
         clearInterval(pollInterval!)
         isProcessing.value = false
         isCanceling.value = false
-      } else {
-        if (progress.value < 92) progress.value += Math.random() * 6 + 1
+        progress.value = 0
+        // Optional: show message
+        // alert('Processing was canceled.')
       }
-    } catch (err) { console.error('Polling error:', err) }
-  }, 2000)
+      else {
+        // Still processing
+        if (progress.value < 92) {
+          progress.value += Math.random() * 6 + 1
+        }
+      }
+    } catch (err) {
+      console.error('Polling error:', err)
+    }
+  }, 1500)
 }
 
 const uploadVideo = async () => {
@@ -384,19 +401,35 @@ const uploadVideo = async () => {
 
 const cancelProcessing = async () => {
   if (!jobId.value || isCanceling.value) return
+
   isCanceling.value = true
-  if (pollInterval) { clearInterval(pollInterval); pollInterval = null }
-  if (abortController) { abortController.abort(); abortController = null }
+
+  // Stop polling
+  if (pollInterval) {
+    clearInterval(pollInterval)
+    pollInterval = null
+  }
+
+  // Abort upload if still uploading
+  if (abortController) {
+    abortController.abort()
+    abortController = null
+  }
+
   try {
     await fetch(`http://127.0.0.1:5000/api/cancel/${jobId.value}`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
     }).catch(() => {})
   } finally {
+    // Full reset
     isProcessing.value = false
     isCanceling.value = false
     isDone.value = false
     progress.value = 0
     markdownContent.value = ''
+    jobId.value = null
+    selectedFile.value = null
   }
 }
 

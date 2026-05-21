@@ -2,13 +2,13 @@
 Export to Markdown.
 
 Renders the enriched Segments into a clean Markdown document using a
-Jinja2 templates. Image paths are made relative to the output file so
-the markdown is portable (can be moved or converted to HTML/PDF without
-breaking image links).
+Jinja2 templates. Supports both relative paths (for web viewing) and
+base64 embedded images (for PDF/Word export).
 """
 
 from __future__ import annotations
 
+import base64
 from datetime import datetime
 from pathlib import Path
 from typing import Iterable
@@ -41,6 +41,51 @@ def _make_env() -> Environment:
     )
 
 
+# Image handling helpers
+
+def _image_to_base64(image_path: Path) -> str | None:
+    """
+    Convert image file to base64 data URI.
+
+    Returns a data URI like: data:image/jpeg;base64,/9j/4AAQSkZ...
+    This can be embedded directly in markdown/HTML and works with PDF converters.
+    """
+    if not image_path or not image_path.exists():
+        return None
+
+    try:
+        # Determine MIME type based on file extension
+        suffix = image_path.suffix.lower()
+        mime_type = {
+            '.jpg': 'image/jpeg',
+            '.jpeg': 'image/jpeg',
+            '.png': 'image/png',
+            '.webp': 'image/webp',
+            '.gif': 'image/gif',
+        }.get(suffix, 'image/jpeg')
+
+        with open(image_path, "rb") as img_file:
+            b64_data = base64.b64encode(img_file.read()).decode()
+
+        return f"data:{mime_type};base64,{b64_data}"
+    except Exception as e:
+        log.warning(f"Failed to embed image {image_path}: {e}")
+        return None
+
+
+def _relative_to(target: Path, base: Path) -> str:
+    """
+    Return `target` as a forward-slash path relative to `base`.
+    Falls back to the absolute path if they're on different drives.
+    """
+    target = Path(target).resolve()
+    base = Path(base).resolve()
+    try:
+        return target.relative_to(base).as_posix()
+    except ValueError:
+        return target.as_posix()
+
+
 # Public API
 
 def export_markdown(
@@ -66,7 +111,8 @@ def export_markdown(
     subtitle : str | None
         Optional italic line under the title.
     embed_frames : bool
-        If True, include keyframe images in the output.
+        If True, embed images as base64 (for PDF/Word export).
+        If False, use relative paths (for web viewing).
     include_transcript : bool
         If True, include each segment's full transcript under a <details> block.
 
@@ -82,14 +128,23 @@ def export_markdown(
     output_path = Path(output_path).resolve()
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # Attach `frame_rel_path` to each segment so the templates can use it.
-    # Relative to output_path's parent, so `output/notes.md` will point to
-    # `frames/segment_001.jpg` — not an absolute path.
-    # Attach `frame_rel_path` to each segment so the templates can use it.
-    # Build a lightweight view-model for the templates.
-    # We don't mutate Segment — we just package the data the templates needs.
-    segment_views = [
-        {
+    # Build view-model for templates
+    segment_views = []
+    for seg in segments:
+        # Ensure frame_path is a Path object
+        frame_path = Path(seg.frame_path) if seg.frame_path else None
+
+        # Determine image source based on embed_frames setting
+        if frame_path and frame_path.exists() and embed_frames:
+            # Embed as base64 (for PDF/Word export)
+            frame_src = _image_to_base64(frame_path)
+        elif frame_path and frame_path.exists() and not embed_frames:
+            # Use relative path (for web viewing)
+            frame_src = _relative_to(frame_path, output_path.parent)
+        else:
+            frame_src = None
+
+        view = {
             "id": seg.id,
             "title": seg.title,
             "timestamp_label": seg.timestamp_label,
@@ -97,19 +152,15 @@ def export_markdown(
             "summary": seg.summary,
             "key_points": seg.key_points,
             "transcript": seg.transcript,
-            "frame_rel_path": (
-                _relative_to(seg.frame_path, output_path.parent)
-                if seg.frame_path is not None else None
-            ),
+            "frame_src": frame_src,
         }
-        for seg in segments
-    ]
+        segment_views.append(view)
 
     log.info(
         f"Rendering [cyan]{len(segments)}[/cyan] segments "
         f"to [cyan]{output_path.name}[/cyan] "
-        f"(frames=[yellow]{embed_frames}[/yellow], "
-        f"transcript=[yellow]{include_transcript}[/yellow])"
+        f"(embed_frames=[yellow]{embed_frames}[/yellow], "
+        f"include_transcript=[yellow]{include_transcript}[/yellow])"
     )
 
     try:
@@ -137,18 +188,3 @@ def export_markdown(
         f"([yellow]{size_kb:.1f} KB[/yellow])"
     )
     return output_path
-
-
-# Helpers
-
-def _relative_to(target: Path, base: Path) -> str:
-    """
-    Return `target` as a forward-slash path relative to `base`.
-    Falls back to the absolute path if they're on different drives.
-    """
-    target = Path(target).resolve()
-    base = Path(base).resolve()
-    try:
-        return target.relative_to(base).as_posix()
-    except ValueError:
-        return target.as_posix()

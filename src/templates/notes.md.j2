@@ -9,8 +9,8 @@
 
 ⏱ **{{ segment.timestamp_label }}** · {{ "%.1f"|format(segment.duration) }}s
 
-{% if segment.frame_rel_path and embed_frames -%}
-![Chapter {{ segment.id }}]({{ segment.frame_rel_path }})
+{% if segment.frame_src and embed_frames -%}
+![Chapter {{ segment.id }}]({{ segment.frame_src }})
 
 {% endif -%}
 
