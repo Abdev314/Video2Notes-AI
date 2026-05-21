@@ -205,7 +205,7 @@
 import {ref, onUnmounted, onMounted, computed} from 'vue'
 import { saveAs } from 'file-saver'
 import jsPDF from 'jspdf'
-import { Document, Packer, Paragraph, TextRun, HeadingLevel } from 'docx'
+import { Document, Packer, Paragraph, TextRun, HeadingLevel, ImageRun } from 'docx'
 import AIStatusPanel from "@/pages/AIStatusPanel.vue";
 // State
 const fileInput = ref<HTMLInputElement | null>(null)
@@ -248,16 +248,16 @@ onMounted(() => document.addEventListener('click', handleClickOutside))
 onUnmounted(() => document.removeEventListener('click', handleClickOutside))
 
 // Download functions (backend-agnostic)
-const downloadCurrentFormat = () => {
+const downloadCurrentFormat = async () => {
   if (!markdownContent.value || !jobId.value) return
   const filename = `notes-${jobId.value.slice(0, 8)}`
 
   if (selectedFormat.value === 'md') {
     downloadMarkdown(filename)
   } else if (selectedFormat.value === 'pdf') {
-    downloadPDF(filename)
+    await downloadPDF(filename)
   } else if (selectedFormat.value === 'docx') {
-    downloadWord(filename)
+    await downloadWord(filename)
   }
 }
 
@@ -266,31 +266,253 @@ const downloadMarkdown = (filename: string) => {
   saveAs(blob, `${filename}.md`)
 }
 
-const downloadPDF = (filename: string) => {
+type ParsedChapter = {
+  id: string
+  title: string
+  timestampLabel?: string
+  durationLabel?: string
+  summary?: string
+  keyPoints: string[]
+  imageSrc?: string
+}
+
+const parseNotesMarkdown = (md: string): { title: string, chapters: ParsedChapter[] } => {
+  const lines = md.split(/\r?\n/)
+  let docTitle = "Video Notes"
+
+  for (const line of lines) {
+    const m = line.match(/^#\s+(.+)\s*$/)
+    if (m && m[1]) { docTitle = m[1].trim(); break }
+  }
+
+  const chapters: ParsedChapter[] = []
+  let i = 0
+  while (i < lines.length) {
+    const line0 = lines[i] ?? ""
+    const start = line0.match(/^##\s+Chapter\s+(\d+)\s+—\s+(.+)\s*$/)
+    if (!start) { i++; continue }
+
+    const chapter: ParsedChapter = {
+      id: start[1]!,
+      title: (start[2] || "").trim(),
+      keyPoints: [],
+    }
+    i += 1
+
+    // Scan until next chapter heading (or EOF)
+    const summaryLines: string[] = []
+    let inKeyPoints = false
+    let inTranscript = false
+    while (i < lines.length && !(lines[i] ?? "").startsWith("## Chapter ")) {
+      const line = lines[i] ?? ""
+
+      if (line.startsWith("<details>")) inTranscript = true
+      if (inTranscript) {
+        if (line.startsWith("</details>")) inTranscript = false
+        i += 1
+        continue
+      }
+
+      const ts = line.match(/⏱\s+\*\*(.*?)\*\*\s*·\s*(.+)\s*$/)
+      if (ts) {
+        chapter.timestampLabel = (ts[1] || "").trim()
+        chapter.durationLabel = (ts[2] || "").trim()
+        i += 1
+        continue
+      }
+
+      const img = line.match(/!\[[^\]]*\]\(([^)]+)\)/)
+      if (img) {
+        chapter.imageSrc = (img[1] || "").trim()
+        i += 1
+        continue
+      }
+
+      if (line.trim() === "**Key points:**") {
+        inKeyPoints = true
+        i += 1
+        continue
+      }
+
+      if (inKeyPoints) {
+        const kp = line.match(/^\-\s+(.+)\s*$/)
+        if (kp) {
+          chapter.keyPoints.push((kp[1] || "").trim())
+          i += 1
+          continue
+        }
+        // End key points section when we hit a blank or non-bullet.
+        if (line.trim() === "" || !line.trim().startsWith("-")) {
+          inKeyPoints = false
+          i += 1
+          continue
+        }
+      }
+
+      // Ignore footer separator
+      if (line.trim() === "---") break
+
+      if (line.trim() !== "") summaryLines.push(line)
+      i += 1
+    }
+
+    const summary = summaryLines.join("\n").trim()
+    if (summary) chapter.summary = summary
+    chapters.push(chapter)
+  }
+
+  return { title: docTitle, chapters }
+}
+
+const dataUriToBytes = async (dataUri: string): Promise<Uint8Array> => {
+  const res = await fetch(dataUri)
+  const buf = await res.arrayBuffer()
+  return new Uint8Array(buf)
+}
+
+const dataUriToDocxType = (dataUri: string): "jpg" | "png" | "gif" | "bmp" | null => {
+  const m = dataUri.match(/^data:image\/([a-zA-Z0-9+.-]+);base64,/)
+  if (!m) return null
+  const fmt = (m[1] || "").toLowerCase()
+  if (fmt === "jpeg" || fmt === "jpg") return "jpg"
+  if (fmt === "png") return "png"
+  if (fmt === "gif") return "gif"
+  if (fmt === "bmp") return "bmp"
+  return null
+}
+
+const loadImageSize = (src: string): Promise<{ width: number, height: number }> =>
+  new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => resolve({ width: img.naturalWidth || img.width, height: img.naturalHeight || img.height })
+    img.onerror = (e) => reject(e)
+    img.src = src
+  })
+
+const downloadPDF = async (filename: string) => {
+  const parsed = parseNotesMarkdown(markdownContent.value)
   const doc = new jsPDF('p', 'mm', 'a4')
   const margin = 20
   const pageWidth = doc.internal.pageSize.getWidth()
+  const pageHeight = doc.internal.pageSize.getHeight()
   const textWidth = pageWidth - 2 * margin
 
-  doc.setFontSize(16)
-  doc.text("Video to Notes", pageWidth / 2, 25, { align: 'center' })
-  doc.setFontSize(11)
+  let y = 20
 
-  const lines = doc.splitTextToSize(markdownContent.value, textWidth)
-  doc.text(lines, margin, 45)
+  const ensureSpace = (neededMm: number) => {
+    if (y + neededMm <= pageHeight - margin) return
+    doc.addPage()
+    y = margin
+  }
+
+  const addWrappedText = (text: string, fontSize = 11, extraSpacing = 2) => {
+    doc.setFontSize(fontSize)
+    const lines = doc.splitTextToSize(text, textWidth)
+    ensureSpace(lines.length * (fontSize * 0.42) + 4)
+    doc.text(lines, margin, y)
+    y += lines.length * (fontSize * 0.42) + extraSpacing
+  }
+
+  doc.setFontSize(18)
+  doc.text(parsed.title || "Video Notes", pageWidth / 2, y, { align: 'center' })
+  y += 10
+
+  for (const ch of parsed.chapters) {
+    ensureSpace(12)
+    doc.setFontSize(14)
+    doc.text(`Chapter ${ch.id} - ${ch.title || "Untitled"}`, margin, y)
+    y += 7
+
+    const tsParts = [ch.timestampLabel ? `Time: ${ch.timestampLabel}` : null, ch.durationLabel ? `Duration: ${ch.durationLabel}` : null]
+      .filter(Boolean)
+      .join("   ")
+    if (tsParts) addWrappedText(tsParts, 10, 3)
+
+    if (ch.imageSrc && ch.imageSrc.startsWith("data:image/")) {
+      try {
+        const { width, height } = await loadImageSize(ch.imageSrc)
+        const maxW = textWidth
+        const maxH = 90
+        const pxToMm = 0.264583 // 96dpi px -> mm
+        const wMm0 = width * pxToMm
+        const hMm0 = height * pxToMm
+        const ratio = Math.min(maxW / wMm0, maxH / hMm0, 1)
+        const wMm = wMm0 * ratio
+        const hMm = hMm0 * ratio
+        ensureSpace(hMm + 6)
+
+        const fmt = (ch.imageSrc.match(/^data:image\/(png|jpeg|jpg|webp)/)?.[1] || "jpeg")
+          .toUpperCase()
+          .replace("JPG", "JPEG")
+        doc.addImage(ch.imageSrc, fmt as any, margin, y, wMm, hMm)
+        y += hMm + 4
+      } catch {}
+    }
+
+    if (ch.summary) addWrappedText(ch.summary, 11, 4)
+
+    if (ch.keyPoints.length) {
+      addWrappedText("Key points:", 11, 2)
+      for (const p of ch.keyPoints) addWrappedText(`• ${p}`, 11, 1)
+      y += 2
+    }
+  }
+
   doc.save(`${filename}.pdf`)
 }
 
 const downloadWord = async (filename: string) => {
-  const doc = new Document({
-    sections: [{
-      properties: {},
-      children: [
-        new Paragraph({ text: "Video to Notes", heading: HeadingLevel.HEADING_1 }),
-        new Paragraph({ children: [new TextRun({ text: markdownContent.value, size: 24 })] })
-      ]
-    }]
-  })
+  const parsed = parseNotesMarkdown(markdownContent.value)
+  const children: Paragraph[] = []
+
+  children.push(new Paragraph({ text: parsed.title || "Video Notes", heading: HeadingLevel.HEADING_1 }))
+
+  for (const ch of parsed.chapters) {
+    children.push(new Paragraph({ text: `Chapter ${ch.id} - ${ch.title || "Untitled"}`, heading: HeadingLevel.HEADING_2 }))
+
+    const ts = [ch.timestampLabel ? `Time: ${ch.timestampLabel}` : null, ch.durationLabel ? `Duration: ${ch.durationLabel}` : null]
+      .filter(Boolean)
+      .join("    ")
+    if (ts) children.push(new Paragraph({ children: [new TextRun({ text: ts, size: 20 })] }))
+
+    if (ch.imageSrc && ch.imageSrc.startsWith("data:image/")) {
+      try {
+        const bytes = await dataUriToBytes(ch.imageSrc)
+        const { width, height } = await loadImageSize(ch.imageSrc)
+        const docxType = dataUriToDocxType(ch.imageSrc)
+        if (!docxType) throw new Error("unsupported image type")
+        const maxW = 560
+        const maxH = 360
+        const ratio = Math.min(maxW / width, maxH / height, 1)
+        children.push(new Paragraph({
+          children: [
+            new ImageRun({
+              type: docxType,
+              data: bytes,
+              transformation: {
+                width: Math.round(width * ratio),
+                height: Math.round(height * ratio),
+              }
+            })
+          ]
+        }))
+      } catch {}
+    }
+
+    if (ch.summary) {
+      for (const para of ch.summary.split(/\n\s*\n/)) {
+        const t = para.trim()
+        if (t) children.push(new Paragraph({ children: [new TextRun({ text: t, size: 24 })] }))
+      }
+    }
+
+    if (ch.keyPoints.length) {
+      children.push(new Paragraph({ children: [new TextRun({ text: "Key points:", size: 24 })] }))
+      for (const p of ch.keyPoints) children.push(new Paragraph({ text: p, bullet: { level: 0 } }))
+    }
+  }
+
+  const doc = new Document({ sections: [{ properties: {}, children }] })
   const blob = await Packer.toBlob(doc)
   saveAs(blob, `${filename}.docx`)
 }
