@@ -7,6 +7,23 @@ cd /app
 export XDG_CACHE_HOME="${XDG_CACHE_HOME:-/app/.cache}"
 export HF_HOME="${HF_HOME:-/app/.cache/huggingface}"
 
+# Track background pids for clean shutdown.
+ollama_pid=""
+app_pid=""
+
+shutdown() {
+  # Called on SIGTERM/SIGINT. Best-effort stop background services.
+  if [[ -n "${app_pid}" ]] && kill -0 "${app_pid}" 2>/dev/null; then
+    kill "${app_pid}" 2>/dev/null || true
+  fi
+  if [[ -n "${ollama_pid}" ]] && kill -0 "${ollama_pid}" 2>/dev/null; then
+    kill "${ollama_pid}" 2>/dev/null || true
+  fi
+  wait 2>/dev/null || true
+}
+
+trap shutdown SIGTERM SIGINT
+
 # Prefetch Whisper model at container start (so a fresh host "pulls the model").
 # This avoids long first-request latency in production.
 if [[ "${PREFETCH_WHISPER_MODEL:-1}" == "1" ]]; then
@@ -38,6 +55,7 @@ fi
 if command -v ollama >/dev/null 2>&1; then
   if [[ "${OLLAMA_ENABLE:-0}" == "1" || "${PREFETCH_OLLAMA_MODEL:-1}" == "1" ]]; then
     ollama serve >/tmp/ollama-serve.log 2>&1 &
+    ollama_pid="$!"
     # Best-effort readiness wait (avoid failing the container if Ollama is slow to start).
     for _ in $(seq 1 20); do
       if ollama list >/dev/null 2>&1; then
@@ -58,4 +76,7 @@ else
   fi
 fi
 
-exec "$@"
+# Run the app as a child process so we can also stop Ollama on shutdown.
+"$@" &
+app_pid="$!"
+wait "${app_pid}"

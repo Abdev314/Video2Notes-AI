@@ -24,6 +24,7 @@ class KeyframeExtractionError(RuntimeError):
 
 Position = Literal["start", "middle", "end"]
 
+
 def extract_keyframes(
     video_path: Path,
     segments: list[Segment],
@@ -95,7 +96,8 @@ def extract_keyframes(
                 frame = _resize_keeping_aspect(frame, max_width)
 
             ok = cv2.imwrite(
-                str(frame_path), frame,
+                str(frame_path),
+                frame,
                 [cv2.IMWRITE_JPEG_QUALITY, quality],
             )
             if not ok:
@@ -117,6 +119,7 @@ def extract_keyframes(
 
 
 # Helpers
+
 
 def _pick_timestamp(start: float, end: float, position: Position) -> float:
     """

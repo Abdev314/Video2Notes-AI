@@ -35,7 +35,9 @@ def build_segments(
                     their start timestamp.
     """
     if not scenes:
-        log.warning("[yellow]No scenes provided — returning empty segment list[/yellow]")
+        log.warning(
+            "[yellow]No scenes provided — returning empty segment list[/yellow]"
+        )
         return []
 
     log.info(

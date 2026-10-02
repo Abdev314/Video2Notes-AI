@@ -95,9 +95,7 @@ def detect_scenes(
     # Merge scenes shorter than min_scene_length into the next one
     merged = _merge_short_scenes(raw_scenes, min_scene_length)
 
-    log.info(
-        f"[green]✓ Final scenes after merging:[/green] [cyan]{len(merged)}[/cyan]"
-    )
+    log.info(f"[green]✓ Final scenes after merging:[/green] [cyan]{len(merged)}[/cyan]")
     return merged
 
 

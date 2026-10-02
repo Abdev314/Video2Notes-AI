@@ -23,9 +23,10 @@ log = get_logger(__name__)
 @dataclass
 class Utterance:
     """A single piece of transcribed speech with start/end timestamps."""
-    start: float        # seconds from start of audio
-    end: float          # seconds from start of audio
-    text: str           # the transcribed text
+
+    start: float  # seconds from start of audio
+    end: float  # seconds from start of audio
+    text: str  # the transcribed text
 
     def __str__(self) -> str:
         return f"[{self.start:6.2f}s → {self.end:6.2f}s] {self.text}"
@@ -107,9 +108,26 @@ def transcribe_audio(
             language=language,
             beam_size=beam_size,
             # Helpful Whisper goodies:
-            vad_filter=True,          # skip silence chunks
+            vad_filter=True,  # skip silence chunks
             vad_parameters=dict(min_silence_duration_ms=500),
         )
+    except ValueError as e:
+        if "empty sequence" in str(e).lower() or "max()" in str(e):
+            log.warning(
+                "[yellow]VAD filter failed on this audio (empty sequence). "
+                "Retrying without VAD filter…[/yellow]"
+            )
+            try:
+                segments_iter, info = model.transcribe(
+                    str(audio_path),
+                    language=language,
+                    beam_size=beam_size,
+                    vad_filter=False,
+                )
+            except Exception as e2:
+                raise TranscriptionError(f"Whisper inference failed: {e2}") from e2
+        else:
+            raise TranscriptionError(f"Whisper inference failed: {e}") from e
     except Exception as e:
         raise TranscriptionError(f"Whisper inference failed: {e}") from e
 

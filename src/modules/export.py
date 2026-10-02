@@ -34,14 +34,15 @@ def _make_env() -> Environment:
     """Create a Jinja2 environment pointed at our templates folder."""
     return Environment(
         loader=FileSystemLoader(str(_TEMPLATES_DIR)),
-        autoescape=False,               # markdown is plain text, not HTML
+        autoescape=False,  # markdown is plain text, not HTML
         trim_blocks=True,
         lstrip_blocks=True,
-        undefined=StrictUndefined,      # raises on missing variables — fail loudly
+        undefined=StrictUndefined,  # raises on missing variables — fail loudly
     )
 
 
 # Image handling helpers
+
 
 def _image_to_base64(image_path: Path) -> str | None:
     """
@@ -57,12 +58,12 @@ def _image_to_base64(image_path: Path) -> str | None:
         # Determine MIME type based on file extension
         suffix = image_path.suffix.lower()
         mime_type = {
-            '.jpg': 'image/jpeg',
-            '.jpeg': 'image/jpeg',
-            '.png': 'image/png',
-            '.webp': 'image/webp',
-            '.gif': 'image/gif',
-        }.get(suffix, 'image/jpeg')
+            ".jpg": "image/jpeg",
+            ".jpeg": "image/jpeg",
+            ".png": "image/png",
+            ".webp": "image/webp",
+            ".gif": "image/gif",
+        }.get(suffix, "image/jpeg")
 
         with open(image_path, "rb") as img_file:
             b64_data = base64.b64encode(img_file.read()).decode()
@@ -87,6 +88,7 @@ def _relative_to(target: Path, base: Path) -> str:
 
 
 # Public API
+
 
 def export_markdown(
     segments: Iterable[Segment],

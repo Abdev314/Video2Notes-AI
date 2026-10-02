@@ -34,8 +34,10 @@ class AIAnalysisError(RuntimeError):
 # Expected JSON shape from the LLM
 # ------------------------------------------------------------
 
+
 class _LLMResponse(BaseModel):
     """Strict schema the LLM is asked to match."""
+
     title: str = Field(..., min_length=2, max_length=120)
     summary: str = Field(..., min_length=10, max_length=800)
     key_points: list[str] = Field(default_factory=list, max_length=6)
@@ -162,6 +164,7 @@ def analyze_segments(
 # Internal — handle one segment with retries
 # ------------------------------------------------------------
 
+
 def _analyze_one(
     *,
     client: ollama.Client,
@@ -175,7 +178,7 @@ def _analyze_one(
 
     user_prompt = f"Transcript:\n\n{transcript}"
 
-    for attempt in range(1, max_retries + 2):   # 1 initial + `max_retries` retries
+    for attempt in range(1, max_retries + 2):  # 1 initial + `max_retries` retries
         try:
             response = client.chat(
                 model=model,
@@ -183,7 +186,7 @@ def _analyze_one(
                     {"role": "system", "content": _SYSTEM_PROMPT},
                     {"role": "user", "content": user_prompt},
                 ],
-                format="json",                          # force JSON output
+                format="json",  # force JSON output
                 options={"temperature": temperature},
             )
             raw = response["message"]["content"]

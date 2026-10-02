@@ -19,6 +19,7 @@ from pydantic import BaseModel, Field
 
 # Sub-models — one per section of config.yaml
 
+
 class PathsConfig(BaseModel):
     data_dir: Path = Path("data")
     output_dir: Path = Path("output")
@@ -26,13 +27,14 @@ class PathsConfig(BaseModel):
 
 
 class WhisperConfig(BaseModel):
-    model_config = {"protected_namespaces": ()}   # silence Pydantic warning
+    model_config = {"protected_namespaces": ()}  # silence Pydantic warning
 
     model_size: str = "base"
     language: Optional[str] = None
     device: str = "cpu"
     compute_type: str = "int8"
     beam_size: int = 5
+
 
 class ScenesConfig(BaseModel):
     threshold: float = 27.0
@@ -46,7 +48,7 @@ class KeyframesConfig(BaseModel):
 
 
 class AIConfig(BaseModel):
-    model_config = {"protected_namespaces": ()}   # silence Pydantic warning
+    model_config = {"protected_namespaces": ()}  # silence Pydantic warning
 
     enabled: bool = True
     backend: str = "ollama"
@@ -55,6 +57,7 @@ class AIConfig(BaseModel):
     temperature: float = 0.3
     max_retries: int = 2
 
+
 class OutputConfig(BaseModel):
     formats: list[str] = Field(default_factory=lambda: ["markdown"])
     embed_frames: bool = True
@@ -62,6 +65,7 @@ class OutputConfig(BaseModel):
 
 
 # Top-level Config
+
 
 class Config(BaseModel):
     paths: PathsConfig = PathsConfig()
