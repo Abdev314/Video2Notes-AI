@@ -67,8 +67,6 @@ data/*
 !data/.gitkeep
 
 
-tests/
-
 output/*
 !output/.gitkeep
 
