@@ -1,15 +1,45 @@
-import uuid
-import threading
+import shutil
 import subprocess
 import sys
+import threading
+import uuid
 from pathlib import Path
-from flask import Blueprint, request, jsonify, send_file
+
+from flask import Blueprint, jsonify, request, send_file
 
 bp = Blueprint("api", __name__)
 
 jobs = {}
 _job_lock = threading.Lock()
 _job_procs: dict[str, subprocess.Popen] = {}
+
+
+def _is_valid_video(video_path: Path) -> tuple[bool, str]:
+    """Use FFprobe to verify that the file is a readable video."""
+    probe = shutil.which("ffprobe") or shutil.which("ffmpeg")
+    if not probe:
+        return False, "FFmpeg/FFprobe is not installed or not on PATH."
+
+    # Prefer ffprobe (fast header-only check) over ffmpeg (full decode)
+    binary = shutil.which("ffprobe") or shutil.which("ffmpeg")
+    cmd = [binary, "-v", "error", "-i", str(video_path)]
+    # ffprobe doesn't need output args; ffmpeg would, so keep it minimal
+    if "ffprobe" in binary:
+        cmd += [
+            "-show_entries",
+            "format=duration",
+            "-of",
+            "default=noprint_wrappers=1:nokey=1",
+        ]
+    else:
+        cmd += ["-f", "null", "-"]
+
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode != 0:
+        stderr = result.stderr.strip() or "(no details)"
+        return False, f"Invalid or corrupted video file. {stderr}"
+    return True, ""
+
 
 @bp.route("/health", methods=["GET"])
 def health():
@@ -36,6 +66,16 @@ def process_video():
     video_path.parent.mkdir(parents=True, exist_ok=True)
 
     file.save(video_path)
+
+    # Validate the uploaded file is a real video before starting the pipeline
+    is_valid, validation_error = _is_valid_video(video_path)
+    if not is_valid:
+        video_path.unlink(missing_ok=True)
+        try:
+            output_dir.rmdir()  # remove empty dir
+        except OSError:
+            pass
+        return jsonify({"error": validation_error}), 400
 
     with _job_lock:
         jobs[job_id] = {
@@ -75,7 +115,9 @@ def process_video():
     def _monitor() -> None:
         try:
             stdout, stderr = proc.communicate()
-            combined = (stdout or "") + ("\n" if stdout and stderr else "") + (stderr or "")
+            combined = (
+                (stdout or "") + ("\n" if stdout and stderr else "") + (stderr or "")
+            )
             # Keep logs bounded so status payload stays sane.
             if len(combined) > 8000:
                 combined = combined[-8000:]
@@ -113,8 +155,6 @@ def process_video():
     return jsonify({"job_id": job_id, "status": "processing"}), 202
 
 
-
-
 @bp.route("/status/<job_id>", methods=["GET"])
 def get_status(job_id):
     with _job_lock:
@@ -144,7 +184,7 @@ def get_notes(job_id):
             notes_path,
             mimetype="text/markdown",
             as_attachment=True,
-            download_name=f"notes_{job_id[:8]}.md"
+            download_name=f"notes_{job_id[:8]}.md",
         )
     except Exception as e:
         return jsonify({"error": f"Failed to send file: {str(e)}"}), 500

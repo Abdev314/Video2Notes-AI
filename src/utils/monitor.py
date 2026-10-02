@@ -42,11 +42,13 @@ class ResourceMonitor:
                 elapsed = time.time() - start
                 cpu = psutil.cpu_percent(interval=None)
                 mem = psutil.virtual_memory()
-                writer.writerow([
-                    round(elapsed, 2),
-                    cpu,
-                    round(mem.used / 1e9, 3),
-                    round(mem.total / 1e9, 3),
-                ])
+                writer.writerow(
+                    [
+                        round(elapsed, 2),
+                        cpu,
+                        round(mem.used / 1e9, 3),
+                        round(mem.total / 1e9, 3),
+                    ]
+                )
                 f.flush()
                 self._stop.wait(self.interval)

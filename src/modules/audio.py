@@ -25,9 +25,7 @@ class AudioExtractionError(RuntimeError):
 def ensure_ffmpeg_available() -> None:
     """Fail fast with a helpful message if FFmpeg isn't on PATH."""
     if shutil.which("ffmpeg") is None:
-        raise AudioExtractionError(
-            "FFmpeg not found on PATH.\n"
-        )
+        raise AudioExtractionError("FFmpeg not found on PATH.\n")
 
 
 def extract_audio(
@@ -75,12 +73,17 @@ def extract_audio(
     # Build the FFmpeg command
     cmd = [
         "ffmpeg",
-        "-i", str(video_path),
-        "-vn",                          # drop video stream
-        "-ac", str(channels),           # audio channels
-        "-ar", str(sample_rate),        # sample rate
-        "-f", "wav",                    # force WAV container
-        "-loglevel", "error",           # only print real errors
+        "-i",
+        str(video_path),
+        "-vn",  # drop video stream
+        "-ac",
+        str(channels),  # audio channels
+        "-ar",
+        str(sample_rate),  # sample rate
+        "-f",
+        "wav",  # force WAV container
+        "-loglevel",
+        "error",  # only print real errors
         "-hide_banner",
     ]
     if overwrite:
@@ -97,7 +100,10 @@ def extract_audio(
 
     try:
         result = subprocess.run(
-            cmd, check=False, capture_output=True, text=True,
+            cmd,
+            check=False,
+            capture_output=True,
+            text=True,
         )
     except FileNotFoundError as e:
         # Race condition: ffmpeg disappeared between the which() check and now
@@ -117,7 +123,6 @@ def extract_audio(
 
     size_mb = output_path.stat().st_size / 1_000_000
     log.info(
-        f"[green]✓ Audio extracted[/green] "
-        f"([yellow]{size_mb:.1f} MB[/yellow])"
+        f"[green]✓ Audio extracted[/green] " f"([yellow]{size_mb:.1f} MB[/yellow])"
     )
     return output_path

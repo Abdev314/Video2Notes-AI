@@ -544,6 +544,10 @@ const formatFileSize = (bytes: number): string => {
 }
 
 // Polling & upload
+// Same-origin API by default (Flask serves this app); set VITE_API_BASE_URL
+// at build time to point the UI at a separate API host.
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? ''
+
 let pollInterval: ReturnType<typeof setInterval> | null = null
 let abortController: AbortController | null = null
 
@@ -552,14 +556,14 @@ const startPolling = (id: string) => {
 
   pollInterval = setInterval(async () => {
     try {
-      const res = await fetch(`http://127.0.0.1:5000/api/status/${id}`)
+      const res = await fetch(`${API_BASE}/api/status/${id}`)
       const data = await res.json()
 
       if (data.status === 'done') {
         clearInterval(pollInterval!)
         progress.value = 100
         try {
-          const notesRes = await fetch(`http://127.0.0.1:5000/api/notes/${id}`)
+          const notesRes = await fetch(`${API_BASE}/api/notes/${id}`)
           markdownContent.value = await notesRes.text()
         } catch {}
         isDone.value = true
@@ -567,7 +571,8 @@ const startPolling = (id: string) => {
 
       } else if (data.status === 'failed') {
         clearInterval(pollInterval!)
-        alert('Processing failed: ' + (data.error || 'Unknown error'))
+        const details = data.logs ? '\n\nDetails:\n' + data.logs.slice(-800) : ''
+        alert('Processing failed: ' + (data.error || 'Unknown error') + details)
         isProcessing.value = false
 
       } else if (data.status === 'canceled') {
@@ -604,7 +609,7 @@ const uploadVideo = async () => {
   formData.append('video', selectedFile.value)
 
   try {
-    const res = await fetch('http://127.0.0.1:5000/api/process', {
+    const res = await fetch(`${API_BASE}/api/process`, {
       method: 'POST', body: formData, signal: abortController.signal
     })
     const data = await res.json()
@@ -639,7 +644,7 @@ const cancelProcessing = async () => {
   }
 
   try {
-    await fetch(`http://127.0.0.1:5000/api/cancel/${jobId.value}`, {
+    await fetch(`${API_BASE}/api/cancel/${jobId.value}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' }
     }).catch(() => {})

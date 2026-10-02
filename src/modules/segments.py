@@ -9,8 +9,6 @@ Segment objects, which are the pipeline's chapter unit.
 from __future__ import annotations
 
 from src.models.segment import Segment
-
-
 from src.modules.transcribe import Utterance
 from src.utils.logger import get_logger
 
@@ -35,7 +33,9 @@ def build_segments(
                     their start timestamp.
     """
     if not scenes:
-        log.warning("[yellow]No scenes provided — returning empty segment list[/yellow]")
+        log.warning(
+            "[yellow]No scenes provided — returning empty segment list[/yellow]"
+        )
         return []
 
     log.info(

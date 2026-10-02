@@ -1,17 +1,17 @@
-from flask import Flask, send_from_directory, request
-from flask_cors import CORS
-from .routes import bp  # Your API routes
 import os
+
+from flask import Flask, request, send_from_directory
+from flask_cors import CORS
+
+from .routes import bp  # Your API routes
 
 
 def create_app():
-    frontend_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../frontend/dist"))
-
-    app = Flask(
-        __name__,
-        static_folder=frontend_path,
-        static_url_path=""
+    frontend_path = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "../frontend/dist")
     )
+
+    app = Flask(__name__, static_folder=frontend_path, static_url_path="")
 
     # Only enable CORS for API routes
     CORS(app, resources={r"/api/*": {"origins": "*"}})
@@ -46,8 +46,10 @@ def create_app():
     # ✅ Add cache-control headers to prevent stale loads
     @app.after_request
     def add_cache_headers(response):
-        if request.path.endswith('.html') or request.path == '/':
-            response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        if request.path.endswith(".html") or request.path == "/":
+            response.headers["Cache-Control"] = (
+                "no-store, no-cache, must-revalidate, max-age=0"
+            )
         return response
 
     return app

@@ -1,4 +1,5 @@
 """Plot the resource monitor CSV as a PNG."""
+
 import sys
 from pathlib import Path
 

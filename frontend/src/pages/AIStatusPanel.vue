@@ -129,7 +129,7 @@ interface SystemStats {
   avgInference: string | null
 }
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? ''
 
 const OLLAMA_BASE = import.meta.env.VITE_OLLAMA_URL ?? 'http://localhost:11434'
 

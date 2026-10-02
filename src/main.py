@@ -2,16 +2,20 @@
 Wraps the 7-step pipeline so users can run the whole tool from the
 command line without writing any Python.
 """
+
 from __future__ import annotations
+
 from pathlib import Path
+
 import click
+
+from src.modules.ai import AIAnalysisError, analyze_segments
 from src.modules.audio import extract_audio
-from src.modules.transcribe import transcribe_audio
+from src.modules.export import export_markdown
+from src.modules.keyframes import extract_keyframes
 from src.modules.scenes import detect_scenes
 from src.modules.segments import build_segments
-from src.modules.keyframes import extract_keyframes
-from src.modules.ai import analyze_segments, AIAnalysisError
-from src.modules.export import export_markdown
+from src.modules.transcribe import transcribe_audio
 from src.utils.config import load_config
 from src.utils.logger import get_logger
 from src.utils.monitor import ResourceMonitor
@@ -53,7 +57,9 @@ def run_pipeline(
         )
         segments = build_segments(scenes, utterances)
         segments = extract_keyframes(
-            video, segments, frames_dir,
+            video,
+            segments,
+            frames_dir,
             position=cfg.keyframes.position,
             quality=cfg.keyframes.quality,
             max_width=cfg.keyframes.max_width,
@@ -76,7 +82,7 @@ def run_pipeline(
             segments,
             output,
             title=_pretty_title(video.stem),
-            embed_frames=False,                    # Relative paths for web
+            embed_frames=False,  # Relative paths for web
             include_transcript=cfg.output.include_transcript,
         )
 
@@ -86,18 +92,18 @@ def run_pipeline(
             segments,
             embedded_path,
             title=_pretty_title(video.stem),
-            embed_frames=True,                     # ← Base64 images (KEY FIX)
+            embed_frames=True,  # ← Base64 images (KEY FIX)
             include_transcript=cfg.output.include_transcript,
         )
 
     log.info(f"[bold green]✓ Done.[/bold green] Open: [cyan]{output}[/cyan]")
 
     return {
-        "notes_path": str(output),           # relative version
+        "notes_path": str(output),  # relative version
         "embedded_notes_path": str(embedded_path),  # ← New
         "frames_dir": str(frames_dir),
         "segment_count": len(segments),
-        "segments": segments,                # ← Important for re-export
+        "segments": segments,  # ← Important for re-export
     }
 
 
@@ -112,7 +118,8 @@ def _pretty_title(stem: str) -> str:
     type=click.Path(exists=True, dir_okay=False, path_type=Path),
 )
 @click.option(
-    "-o", "--output",
+    "-o",
+    "--output",
     type=click.Path(path_type=Path),
     default=Path("output/notes.md"),
     show_default=True,

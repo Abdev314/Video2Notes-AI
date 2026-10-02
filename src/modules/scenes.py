@@ -10,8 +10,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from scenedetect import open_video, SceneManager
-
+from scenedetect import SceneManager, open_video
 from scenedetect.detectors import AdaptiveDetector
 
 from src.utils.logger import get_logger
@@ -95,9 +94,7 @@ def detect_scenes(
     # Merge scenes shorter than min_scene_length into the next one
     merged = _merge_short_scenes(raw_scenes, min_scene_length)
 
-    log.info(
-        f"[green]✓ Final scenes after merging:[/green] [cyan]{len(merged)}[/cyan]"
-    )
+    log.info(f"[green]✓ Final scenes after merging:[/green] [cyan]{len(merged)}[/cyan]")
     return merged
 
 
