@@ -3,12 +3,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from src.modules.ai import analyze_segments
 from src.modules.audio import extract_audio
-from src.modules.transcribe import transcribe_audio
+from src.modules.keyframes import extract_keyframes
 from src.modules.scenes import detect_scenes
 from src.modules.segments import build_segments
-from src.modules.keyframes import extract_keyframes
-from src.modules.ai import analyze_segments
+from src.modules.transcribe import transcribe_audio
 
 
 def main():

@@ -4,15 +4,18 @@ command line without writing any Python.
 """
 
 from __future__ import annotations
+
 from pathlib import Path
+
 import click
+
+from src.modules.ai import AIAnalysisError, analyze_segments
 from src.modules.audio import extract_audio
-from src.modules.transcribe import transcribe_audio
+from src.modules.export import export_markdown
+from src.modules.keyframes import extract_keyframes
 from src.modules.scenes import detect_scenes
 from src.modules.segments import build_segments
-from src.modules.keyframes import extract_keyframes
-from src.modules.ai import analyze_segments, AIAnalysisError
-from src.modules.export import export_markdown
+from src.modules.transcribe import transcribe_audio
 from src.utils.config import load_config
 from src.utils.logger import get_logger
 from src.utils.monitor import ResourceMonitor

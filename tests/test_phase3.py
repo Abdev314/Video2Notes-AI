@@ -7,7 +7,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from src.modules.audio import extract_audio, AudioExtractionError
+from src.modules.audio import AudioExtractionError, extract_audio
 from src.utils.logger import get_logger
 
 

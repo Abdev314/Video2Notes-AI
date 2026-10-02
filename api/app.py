@@ -1,7 +1,9 @@
-from flask import Flask, send_from_directory, request
-from flask_cors import CORS
-from .routes import bp  # Your API routes
 import os
+
+from flask import Flask, request, send_from_directory
+from flask_cors import CORS
+
+from .routes import bp  # Your API routes
 
 
 def create_app():

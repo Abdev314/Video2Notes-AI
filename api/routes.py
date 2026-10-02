@@ -1,10 +1,11 @@
-import uuid
-import threading
+import shutil
 import subprocess
 import sys
-import shutil
+import threading
+import uuid
 from pathlib import Path
-from flask import Blueprint, request, jsonify, send_file
+
+from flask import Blueprint, jsonify, request, send_file
 
 bp = Blueprint("api", __name__)
 

@@ -10,8 +10,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from scenedetect import open_video, SceneManager
-
+from scenedetect import SceneManager, open_video
 from scenedetect.detectors import AdaptiveDetector
 
 from src.utils.logger import get_logger
